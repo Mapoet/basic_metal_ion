@@ -40,7 +40,7 @@
 
 !     height integrated pedersen/hall conductivities
 
-    real, dimension(:,:,:), allocatable :: u1t, u2t, u3t, u4t
+    real, dimension(:,:,:), allocatable :: u1t, u2t, u3t, u4t, u5t
     real, dimension(:,:,:), allocatable :: vnqt, vnpt, vnphit
     real, dimension(:,:,:), allocatable :: jpt, jphit
     real, dimension(:,:,:), allocatable :: u1pt, u2st, u3ht
@@ -267,7 +267,7 @@
         allocate (ut(nz,nf,nlt),vt(nz,nf,nlt),vpit(nz,nf,nlt))
         allocate (tet(nz,nf,nlt),tnt(nz,nf,nlt))
         allocate (u1t(nz,nf,nlt),u2t(nz,nf,nlt),u3t(nz,nf,nlt), &
-                 u4t(nz,nf,nlt))
+                 u4t(nz,nf,nlt),u5t(nz,nf,nlt))
         allocate (vnqt(nz,nf,nlt),vnpt(nz,nf,nlt),vnphit(nz,nf,nlt))
         allocate (jpt(nz,nf,nlt),jphit(nz,nf,nlt))
         allocate (u1pt(nz,nf,nlt),u2st(nz,nf,nlt),u3ht(nz,nf,nlt))
@@ -427,6 +427,8 @@
                                   MPI_COMM_WORLD, status, ierr)
                     call mpi_recv(u4, nz*nf*nl, MPI_REAL, iwrk, 0, &
                                   MPI_COMM_WORLD, status, ierr)
+                    call mpi_recv(u5, nz*nf*nl, MPI_REAL, iwrk, 0, &
+                                  MPI_COMM_WORLD, status, ierr)
                     call mpi_recv(sigmap, nz*nf*nl, MPI_REAL, iwrk, 0, &
                                   MPI_COMM_WORLD, status, ierr)
                     call mpi_recv(sigmah, nz*nf*nl, MPI_REAL, iwrk, 0, &
@@ -498,6 +500,7 @@
                                 u2t(i,j,kk)       = u2(i,j,k)
                                 u3t(i,j,kk)       = u3(i,j,k)
                                 u4t(i,j,kk)       = u4(i,j,k)
+                                u5t(i,j,kk)       = u5(i,j,k)
                                 sigmapt(i,j,kk)   = sigmap(i,j,k)
                                 sigmaht(i,j,kk)   = sigmah(i,j,k)
                                 sigmapict(i,j,kk) = sigmapic(i,j,k)
@@ -572,7 +575,7 @@
                 ntm = ntm + 1
                 call output ( hrut,ntm,istep,phi,denit,dennt,vsit, &
                               sumvsit,tit,ut,vt,vpit,tet,tnt,u1t, &
-                              u2t,u3t,u4t,vnqt,vnpt,vnphit,jpt,jphit, &
+                              u2t,u3t,u4t,u5t,vnqt,vnpt,vnphit,jpt,jphit, &
                               u1pt,u2st,u3ht,sigmapict,sigmahict, &
                               sigmapt,sigmaht )
                                          
@@ -1011,6 +1014,8 @@
                               MPI_COMM_WORLD,  ierr)
                 call mpi_send(u4, nz*nf*nl, MPI_REAL, 0, 0, &
                               MPI_COMM_WORLD,  ierr)
+                call mpi_send(u5, nz*nf*nl, MPI_REAL, 0, 0, &
+                              MPI_COMM_WORLD,  ierr)
                 call mpi_send(sigmap, nz*nf*nl, MPI_REAL, 0, 0, &
                               MPI_COMM_WORLD, ierr)
                 call mpi_send(sigmah, nz*nf*nl, MPI_REAL, 0, 0, &
@@ -1110,6 +1115,7 @@
     real, dimension(:,:,:), allocatable :: gsryt
     real, dimension(:,:,:), allocatable :: gsrzt
     real, dimension(:,:,:), allocatable :: xrgt
+    real, dimension(:,:,:), allocatable :: volt
     real, dimension(:,:,:), allocatable :: xthgt
     real, dimension(:,:,:), allocatable :: xphigt
 
@@ -1132,14 +1138,16 @@
       psmooth,hall,restart, &
       storm_ti,storm_tf,vexb_max, &
       lmadala,lcr,lvs,lweimer,decay_time,pcrit, &
-      lhwm93,lhwm14, anu_drag0
+      lhwm93,lhwm14, anu_drag0, &
+      alt_metal,del_alt_metal,deni_mg0,deni_fe0
 
     if ( taskid == 0 ) then
         allocate (altstmp(nz,nf,nl), glatstmp(nz,nf,nl),glonstmp(nz,nf,nl))
         allocate (altst(nz,nf,nlt),  glatst(nz,nf,nlt), glonst(nz,nf,nlt))
         allocate (baltst(nz,nf,nlt), blatst(nz,nf,nlt), blonst(nz,nf,nlt))
         allocate (xst(nz,nf,nlt),    yst(nz,nf,nlt), zst(nz,nf,nlt))
-        allocate (altptmp(nzp1,nfp1,nlp1), blatptmp(nzp1,nfp1,nlp1), blonptmp(nzp1,nfp1,nlp1))
+        allocate (altptmp(nzp1,nfp1,nlp1), blatptmp(nzp1,nfp1,nlp1))
+        allocate (blonptmp(nzp1,nfp1,nlp1))
         allocate (vpsnxt(nz,nf,nlt), vpsnyt(nz,nf,nlt), vpsnzt(nz,nf,nlt))
         allocate (vhsnxt(nz,nf,nlt), vhsnyt(nz,nf,nlt), vhsnzt(nz,nf,nlt))
         allocate (xpt(nzp1,nfp1,nlt), ypt(nzp1,nfp1,nlt), zpt(nzp1,nfp1,nlt))
@@ -1147,6 +1155,7 @@
         allocate (gsthetaxt(nz,nf,nlt), gsthetayt(nz,nf,nlt), gsthetazt(nz,nf,nlt))
         allocate (gsphixt(nz,nf,nlt), gsphiyt(nz,nf,nlt), gsphizt(nz,nf,nlt))
         allocate (gsrxt(nz,nf,nlt), gsryt(nz,nf,nlt), gsrzt(nz,nf,nlt))
+        allocate (volt(nz,nf,nlt))
         allocate (xrgt(nz,nf,nlt), xthgt(nz,nf,nlt), xphigt(nz,nf,nlt))
         allocate (baltpt(nzp1,nfp1,nlt))
     endif
@@ -1207,6 +1216,10 @@
     call mpi_bcast(lhwm93,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ierr)
     call mpi_bcast(lhwm14,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ierr)
     call mpi_bcast(anu_drag0,1,MPI_REAL,0,MPI_COMM_WORLD,ierr)
+    call mpi_bcast(alt_metal,1,MPI_REAL,0,MPI_COMM_WORLD,ierr)
+    call mpi_bcast(del_alt_metal,1,MPI_REAL,0,MPI_COMM_WORLD,ierr)
+    call mpi_bcast(deni_mg0,1,MPI_REAL,0,MPI_COMM_WORLD,ierr)
+    call mpi_bcast(deni_fe0,1,MPI_REAL,0,MPI_COMM_WORLD,ierr)
 
     dt = dt0
 
@@ -1217,6 +1230,8 @@
     ami(ptn2p) = 28.
     ami(ptnop) = 30.
     ami(pto2p) = 32.
+    ami(ptmgp) = 24.
+    ami(ptfep) = 56.
 
     amn(pth)  = 1.
     amn(pthe) = 4.
@@ -1225,6 +1240,8 @@
     amn(ptn2) = 28.
     amn(ptno) = 30.
     amn(pto2) = 32.
+    amn(ptmg) = 24.
+    amn(ptfe) = 56.
 
     alpha0(pth)  = 0.67
     alpha0(pthe) = 0.21
@@ -1233,6 +1250,8 @@
     alpha0(ptn2) = 1.76
     alpha0(ptno) = 1.74
     alpha0(pto2) = 1.59
+    alpha0(ptmg) = 1.76
+    alpha0(ptfe) = 1.76
 
     do i = 1,7
         aap(i) = ap
@@ -1593,6 +1612,25 @@
                         enddo
                     enddo
 
+                !  receive cell volume
+
+                    call mpi_recv(altstmp, nz*nf*nl, MPI_REAL, &
+                                  iwrk, 0, MPI_COMM_WORLD, status, ierr)
+
+                !  Put the submatrices into the correct matrix
+
+                    do k = 2,nl-1
+                        kk = (iwrk-1)*(nl -2) + k - 1
+                        if(kk == 0) kk = nlt
+                        if(kk == nltp1) kk = 1
+                        do j = 1,nf
+                            do i = 1,nz
+                                volt(i,j,kk) = altstmp(i,j,k)
+                            enddo
+                        enddo
+                    enddo
+
+
                     ifintot = ifintot -1
                                       
                 endif
@@ -1739,6 +1777,9 @@
             close(176)
             close(177)
 
+            open ( unit=169, file='volu.dat'   ,form='unformatted' )
+            write(169) volt
+            close(169)
 
     endif
 
@@ -1768,7 +1809,7 @@
     ! initialize all ions
 
         j0 = 1
-        do n = 1,nion
+        do n = 1,nion-2
             do k = 1,nl
                 do j = 1,nf
                     do i = 1,nz
@@ -1802,6 +1843,28 @@
                 enddo
             enddo
         enddo
+
+       ! metal ions
+
+       ! limit in altitude
+
+          do k = 1,nl
+            do j = 1,nf
+              do i = 1,nz
+                  alt_metal_arg = (alts(i,j,k) - alt_metal) / del_alt_metal
+                  xkill_factor  = 1.
+!!$                  if ( abs(glats(i,j,k)) .gt. 60. ) then
+!!$                    del_glat      = abs(glats(i,j,k)) - 60.
+!!$                    xkill_factor  = exp(-(del_glat/10.)**2)
+!!$                  endif
+                  deni(i,j,k,ptmgp) = deni_mg0 * exp(-alt_metal_arg*alt_metal_arg) * &
+                                      xkill_factor + denmin
+                  deni(i,j,k,ptfep) = deni_fe0 * exp(-alt_metal_arg*alt_metal_arg) * &
+                                      xkill_factor + denmin
+              enddo
+            enddo
+          enddo
+ 
 
     !     initialize helium density = 10% hydrogen density
 
@@ -1958,9 +2021,9 @@
             enddo
         enddo
     endif
-    call mpi_bcast(sigidt,linesuv*7, &
+    call mpi_bcast(sigidt,linesuv*nneut, &
                    MPI_REAL,0,MPI_COMM_WORLD,ierr)
-    call mpi_bcast(sigint,linesnt*7, &
+    call mpi_bcast(sigint,linesnt*nneut, &
                    MPI_REAL,0,MPI_COMM_WORLD,ierr)
 
 !     below is altered from original
@@ -2046,29 +2109,36 @@
 
     ! initialize e x b drift to 0
 
-        do k = 1,nl
-            do j = 1,nf
-                do i = 1,nzp1
-                    vexbs(i,j,k) = 0.
-                enddo
+        do ni = 1,nion
+          do k = 1,nl
+             do j = 1,nf
+               do i = 1,nzp1
+                  vexbs(i,j,k,ni) = 0.
+               enddo
             enddo
+          enddo
         enddo
 
-        do k = 1,nl
+        do ni = 1,nion
+          do k = 1,nl
             do j = 1,nfp1
-                do i = 1,nz
-                    vexbp(i,j,k) = 0.
-                enddo
+              do i = 1,nz
+                  vexbp(i,j,k,ni) = 0.
+              enddo
             enddo
+          enddo
         enddo
 
-        do k = 1,nlp1
+        do ni = 1,nion
+          do k = 1,nlp1
             do j = 1,nf
-                do i = 1,nz
-                    vexbh(i,j,k) = 0.
-                enddo
+               do i = 1,nz
+                 vexbh(i,j,k,ni) = 0.
+              enddo
             enddo
+          enddo
         enddo
+
 
     ! intialize diagnostic variables to 0
 
@@ -2141,6 +2211,9 @@
     use atomic_mod
     use conductance_mod
     use grid_mod
+    use exb_mod
+    use misc_mod
+    use message_passing_mod
 
     real :: prod(nz,nion),loss(nz,nion),lossr, &
     phprodr(nz,nion),chrate(nz,nchem), &
@@ -2193,6 +2266,15 @@
             loss (i,j)  =  lossr / deni(i,nfl,nll,j)
         enddo
 
+!  add loss for NO+ below 90 km
+!  NEED TO IMPROVE THIS
+
+    if ( alts(i,nfl,nll) .lt. 90. ) then
+!      prod(i,ptnop) = 0.
+      loss(i,ptnop) = loss(i,pto2p)
+      loss(i,pthp)  = loss(i,pto2p)
+    endif
+
     !     loss term for hydrogen and helium
 
         if ( alts(i,nfl,nll) > pcrit*re ) then
@@ -2202,9 +2284,19 @@
         !          loss(i,ptop) = loss(i,ptop) + 1./decay_time
         endif
 
-        gs(i,nll)   =  gzero * xrg(i,nfl,nll) &
-        * ( re / (re + alts(i,nfl,nll)) ) ** 2
+!        gs(i,nll)   =  gzero * xrg(i,nfl,nll) &
+!        * ( re / (re + alts(i,nfl,nll)) ) ** 2
 
+        if ( alts(i,nfl,nll) < 110. ) then
+            xloss_110  = 1.e-13
+            delx_loss  = 1.5
+            xloss_rate = xloss_110 * exp(-(alts(i,nfl,nll)-110.)/delx_loss)
+            loss(i,ptmgp)  = xloss_rate
+            loss(i,ptfep)  = xloss_rate
+        else
+            loss(i,ptmgp)  = 1.e-13
+            loss(i,ptfep)  = 1.e-13          
+        endif
 
     !        gs(i,nll)   = -gzero
     !     .                 * ( re / (re + alts(i,nfl,nll)) ) ** 2
@@ -2212,6 +2304,20 @@
     !     .                     gsry(i,nfl,nll)*bdirsy(i,nfl,nll) +
     !     .                     gsrz(i,nfl,nll)*bdirsz(i,nfl,nll)  )
 
+        if ( alts(i,nfl,nll) > 2000. ) then
+            loss(i,ptmgp)  = 1./decay_time
+            loss(i,ptfep)  = 1./decay_time
+        endif
+
+!        gs(i,nll)   =  gzero * xrg(i,nfl,nll) &
+!        * ( re / (re + alts(i,nfl,nll)) ) ** 2
+
+
+            gs(i,nll)   = -gzero &
+                          * ( re / (re + alts(i,nfl,nll)) ) ** 2 &
+                          * ( gsrx(i,nfl,nll)*bdirsx(i,nfl,nll) + &
+                              gsry(i,nfl,nll)*bdirsy(i,nfl,nll) + &
+                              gsrz(i,nfl,nll)*bdirsz(i,nfl,nll)  ) 
 
     ! K     centrifugal force (see notes 2012/01/04)
 
@@ -2221,6 +2327,11 @@
         cfs(i,nll)   =  -fzero * &
         (clat*xrg(i,nfl,nll) + slat*xthg(i,nfl,nll)) &
         * (re + alts(i,nfl,nll)) * clat / re
+
+
+!       note: sign of gp expicitly accounted for
+!       in derivation, i.e., g = -gp phat
+!       so gp is positive here (JH)
 
         gp(i,nfl,nll)   = gzero &
         * ( re / (re + alts(i,nfl,nll)) ) ** 2 &
@@ -2411,6 +2522,8 @@
         ti(i,nfl,nll,ptn2p)    = ti(i,nfl,nll,ptop)
         ti(i,nfl,nll,ptnop)    = ti(i,nfl,nll,ptop)
         ti(i,nfl,nll,pto2p)    = ti(i,nfl,nll,ptop)
+        ti(i,nfl,nll,ptmgp)    = ti(i,nfl,nll,ptop)
+        ti(i,nfl,nll,ptfep)    = ti(i,nfl,nll,ptop)
     enddo
 
     return
@@ -2435,6 +2548,9 @@
     use atomic_mod
     use conductance_mod
     use grid_mod
+    use exb_mod 
+    use misc_mod
+    use message_passing_mod
 
     real :: nuin(nz,nion,nneut),nuij(nz,nion,nion)
     real :: nuint(nz,nion)
@@ -2577,6 +2693,58 @@
         enddo
     enddo
 
+! magnesium (Mg)
+
+    ni = ptmgp
+    do nn = 1,nneut
+        do i = 1,nz
+            if ( nn == ptmg ) then
+                teff    = 0.5 * ( ti(i,nfl,nll,ni) + tn(i,nfl,nll) )
+                fac     = ( 1.00 - .069 * alog10(teff) ) ** 2
+                tfactor = sqrt(teff) * fac
+                nuin(i,ni,nn) = 5.14e-11 * denn(i,nfl,nll,nn) * tfactor
+            else
+                amuf    = ami(ni) * amn(nn) / ( ami(ni) + amn(nn) )
+                amimn   = amn(nn) / ( ami(ni) + amn(nn) )
+                nufacin = 2.69e-9 / sqrt(amuf) * amimn * sqrt(alpha0(nn))
+                nuin(i,ni,nn) = nufacin * denn(i,nfl,nll,nn)
+            endif
+            nuint(i,ni) = nuint(i,ni) + nuin(i,ni,nn)
+            oci = 9.58e3 * bms(i,nfl,nll) * bmag / ami(ni)
+ enddo
+    enddo
+
+! iron (Fe)
+
+    ni = ptfep
+    do nn = 1,nneut
+        do i = 1,nz
+            if ( nn == ptfe ) then
+                teff    = 0.5 * ( ti(i,nfl,nll,ni) + tn(i,nfl,nll) )
+                fac     = ( 1.00 - .069 * alog10(teff) ) ** 2
+                tfactor = sqrt(teff) * fac
+                nuin(i,ni,nn) = 5.14e-11 * denn(i,nfl,nll,nn) * tfactor
+            else
+                amuf    = ami(ni) * amn(nn) / ( ami(ni) + amn(nn) )
+                amimn   = amn(nn) / ( ami(ni) + amn(nn) )
+                nufacin = 2.69e-9 / sqrt(amuf) * amimn * sqrt(alpha0(nn))
+                nuin(i,ni,nn) = nufacin * denn(i,nfl,nll,nn)
+            endif
+            nuint(i,ni) = nuint(i,ni) + nuin(i,ni,nn)
+        enddo
+    enddo
+
+    do ni = 1,nion
+      do i = 1,nz
+            oci = 9.58e3 * bms(i,nfl,nll) * bmag / ami(ni)
+            nuinoci(i,nfl,nll,ni) = nuint(i,ni)/oci
+            if ( alts(i,nll,nll) >= 2000. ) nuinoci(i,nfl,nll,ni) = 1.e-6
+            gpoci(i,nfl,nll,ni)   = gp(i,nfl,nll)/oci
+            gsoci(i,nfl,nll,ni)   = gs(i,nll)/nuint(i,ni)
+      enddo
+    enddo
+
+
 ! ion-ion collision frequency
 
     do ni = nion1,nion2
@@ -2643,13 +2811,17 @@
     enddo
 
 ! get a new value for vsid
+! set tvn = 0 (move parallel ion-neutral velocity to exb_transport)
 
     do i = 2,nz-1
         do ni = nion1,nion2
             mi    = amu * ami(ni)
             k0    = bolt / mi
-            term1 = nuint(i,ni) * tvn(i,nll) + &
-            sumvsi(i,nfl,nll,ni) + gs(i,nll) + cfs(i,nll)
+            xfac  = 1./(1.+nuinoci(i,nfl,nll,ni)**2)
+!            if (ni == ptop) u5(i,nfl,nll) = xfac
+!            xfac  = 1.
+            term1 = nuint(i,ni) * tvn(i,nll)  + &
+                    sumvsi(i,nfl,nll,ni) + gs(i,nll) + cfs(i,nll)
             pip   = 0.5 * (   deni(i+1,nfl,nll,ni) * ti(i+1,nfl,nll,ni) &
             + deni(i,nfl,nll,ni)   * ti(i,nfl,nll,ni)   )
             pim   = 0.5 * (   deni(i,nfl,nll,ni)   * ti(i,nfl,nll,ni) &
@@ -2669,7 +2841,7 @@
             term3 =  - bms(i,nfl,nll) * k0 /  dened &
             * ( pep - pem ) / d22s(i,nfl,nll)
 
-            vsid(i,nfl,nll,ni)  =  term1 + term2 + term3
+            vsid(i,nfl,nll,ni)  =  (term1 + term2 + term3) * xfac
 
         enddo
     enddo

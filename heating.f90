@@ -96,7 +96,7 @@
 ! Divergence of the ExB drift; requires equatorial drift
      
     nzh = nz / 2
-    vexbeq = vexbp(nzh,nfl,nll)
+    vexbeq = vexbp(nzh,nfl,nll,pthp)
     do i = 1,nz
         divvexb(i) = 6.*vexbeq / &
         (ps(i,nfl,nll)*re*1.e5) * &
@@ -213,7 +213,7 @@
 ! Divergence of the ExB drift; requires equatorial drift
 
     nzh = nz / 2
-    vexbeq = vexbp(nzh,nfl,nll)
+    vexbeq = vexbp(nzh,nfl,nll,pthep)
     do i = 1,nz
         divvexb(i) = 6.*vexbeq / &
         (ps(i,nfl,nll)*re*1.e5) * &
@@ -327,7 +327,7 @@
 ! Divergence of the ExB drift; requires equatorial drift
 
     nzh = nz / 2
-    vexbeq = vexbp(nzh,nfl,nll)
+    vexbeq = vexbp(nzh,nfl,nll,ptop)
     do i = 1,nz
         divvexb(i) = 6.*vexbeq / &
         (ps(i,nfl,nll)*re*1.e5) * &
@@ -635,7 +635,7 @@
 ! Divergence of the ExB drift; requires equatorial drift
 
     nzh    = nz / 2
-    vexbeq = vexbp(nzh,nfl,nll)
+    vexbeq = vexbp(nzh,nfl,nll,pthp)
     do i = 1,nz
         divvexb(i) = 6.*vexbeq / &
         (ps(i,nfl,nll)*re*1.e5) * &

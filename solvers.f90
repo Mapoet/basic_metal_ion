@@ -78,6 +78,9 @@
     d(1) = &
     sqrt ( tdeni(1) * prod(1) / loss(1) ) + denmin
 
+    if ( ni == ptmgp ) d(1) = denmin
+    if ( ni == ptfep ) d(1) = denmin
+
 ! upper bc
 
     a(nz) = 0.
@@ -85,6 +88,9 @@
     c(nz) = 0.
     d(nz) = &
     sqrt ( tdeni(nz) * prod(nz) / loss(nz) ) + denmin
+
+    if ( ni == ptmgp ) d(nz) = denmin
+    if ( ni == ptfep ) d(nz) = denmin
 
     call rtryds ( a,b,c,d,tdeni,nz )
           

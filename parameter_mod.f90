@@ -38,7 +38,7 @@ module parameter_mod
 
 !      ion densities
 
-    integer,parameter :: nion  = 7    ! number of ions
+    integer,parameter :: nion  = 9    ! number of ions
     integer,parameter :: pthp  = 1    ! h+
     integer,parameter :: pthep = 5    ! he+
     integer,parameter :: ptnp  = 7    ! n+
@@ -46,10 +46,12 @@ module parameter_mod
     integer,parameter :: ptn2p = 6    ! n2+
     integer,parameter :: ptnop = 3    ! no+
     integer,parameter :: pto2p = 4    ! o2+
+    integer,parameter :: ptmgp = 8    ! mg+
+    integer,parameter :: ptfep = 9    ! fe+
 
 !      neutrals
 
-    integer,parameter :: nneut = 7    ! number of neutrals
+    integer,parameter :: nneut = 9    ! number of neutrals
     integer,parameter :: pth   = 1    ! h
     integer,parameter :: pthe  = 5    ! he
     integer,parameter :: ptn   = 7    ! n
@@ -57,6 +59,8 @@ module parameter_mod
     integer,parameter :: ptn2  = 6    ! n2
     integer,parameter :: ptno  = 3    ! no
     integer,parameter :: pto2  = 4    ! o2
+    integer,parameter :: ptmg  = 8    ! mg
+    integer,parameter :: ptfe  = 9    ! fe
 
 !      number of chemical reactions
 

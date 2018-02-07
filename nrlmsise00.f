@@ -1161,8 +1161,8 @@ c        FOR ON, OR 2. FOR MAIN EFFECTS OFF BUT CROSS TERMS ON
 c
 c        To get current values of SW: CALL TRETRV(SW)
 c
-      DIMENSION SV(25),SAV(25),SVV(1)
-      COMMON/CSW/SW(25),ISW,SWC(25)
+      DIMENSION SV(25),SAV(25),SVV(25)
+      COMMON/CSW/SW(25),SWC(25),ISW
       SAVE
       DO 100 I = 1,25
         SAV(I)=SV(I)

@@ -109,6 +109,8 @@
             denni(i,j,nll,ptno)  = 0.4 * exp( -3700. / tni(i,j,nll) ) &
                                  * denni(i,j,nll,pto2) &
                                  + 5.0e-7 * denni(i,j,nll,pto)
+            denni(i,j,nll,ptmg)  = 3.e3 * exp(-(alts(i,j,nll)-alt_metal)/del_alt_metal)
+            denni(i,j,nll,ptfe)  = 3.e3 * exp(-(alts(i,j,nll)-alt_metal)/del_alt_metal)
        if (taskid.eq.1 .and. i.eq.nz/2 .and. j.eq.20 &
                       .and. nll.eq.nl/2 ) &
           print *,'d = ',d
@@ -161,6 +163,8 @@
             dennf(i,j,nll,ptno)  = 0.4 * exp( -3700. / tnf(i,j,nll) ) &
                                  * dennf(i,j,nll,pto2) &
                                  + 5.0e-7 * dennf(i,j,nll,pto)
+            dennf(i,j,nll,ptmg)  = 3.e3 * exp(-(alts(i,j,nll)-alt_metal)/del_alt_metal)
+            dennf(i,j,nll,ptfe)  = 3.e3 * exp(-(alts(i,j,nll)-alt_metal)/del_alt_metal)
         enddo
     enddo
 

@@ -153,6 +153,10 @@
         relossr(iz,ptnop) = 4.2e-7 / te300 ** 0.85     !   (bb)
         relossr(iz,pto2p) = 1.6e-7 / te300 ** 0.55     !   (schunk)
 
+        relossr(iz,ptmgp)  = 4.e-12  ! (mcneil)
+        relossr(iz,ptfep)  = 4.e-12  ! (mcneil)
+
+
     enddo
 
     return

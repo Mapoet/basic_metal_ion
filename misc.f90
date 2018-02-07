@@ -41,15 +41,18 @@
     do k = 1,nl
         do j = 1,nf
             do i = 1,nz
-                dts = xdels(i,j,k) / amax1(1.,abs(vexbs(i,j,k)))
-                dtp = xdelp(i,j,k) / amax1(1.,abs(vexbp(i,j,k)))
-                dth = xdelh(i,j,k) / amax1(1.,abs(vexbh(i,j,k)))
+                dts = xdels(i,j,k) / amax1(1.,abs(vexbs(i,j,k,ptop)))
+                dtp = xdelp(i,j,k) / amax1(1.,abs(vexbp(i,j,k,ptop)))
+                dth = xdelh(i,j,k) / amax1(1.,abs(vexbh(i,j,k,ptop)))
                 dt1 = amin1 ( dts,dtp,dth )
                 if ( dt1 <= dtnew ) then
                     dtnew = dt1
                     i0    = i
                     j0    = j
                     k0    = k
+                    dtsnew = dts
+                    dtpnew = dtp
+                    dthnew = dth
                 endif
             enddo
         enddo

@@ -107,6 +107,8 @@
                   MPI_COMM_WORLD, ierr)
     call mpi_send(gsrz, nz*nf*nl, MPI_REAL, 0, 0, &
                   MPI_COMM_WORLD, ierr)
+    call mpi_send(vol, nz*nf*nl, MPI_REAL, 0, 0, &
+                  MPI_COMM_WORLD, ierr)
 
     end subroutine grid3_mpi
 

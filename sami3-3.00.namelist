@@ -24,7 +24,8 @@
   gamss    =    .1,
   alt_crit_avg = 6370.
   blat_max4 = 89.,
-  blat_min  = 6.85,
+!  blat_min  = 6.85,  ! 90 km
+  blat_min  = 6.25,
   snn      =    1.,1.,1.,1.,1.,1.,1.,
   stn      =    1.,
   denmin   =    1.e-6,

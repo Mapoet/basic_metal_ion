@@ -15,6 +15,8 @@
     use exb_mod
     use misc_mod
     use grid_mod
+    use message_passing_mod
+
 
     real :: denic(nz,nf,nl,nion)
     real :: tic(nz,nf,nl,nion)
@@ -44,6 +46,41 @@
     call vexb_phi(phi)
     call current_jp_jphi
 
+!     boundary on nuinoci
+
+      do ni = 1,nion
+        do k = 1,nl
+          do j = 1,nf
+            nuinoci(nzp1,j,k,ni) = nuinoci(nz,j,k,ni)
+            gpoci(nzp1,j,k,ni)   = gpoci(nz,j,k,ni)
+            gsoci(nzp1,j,k,ni)   = gsoci(nz,j,k,ni)
+          enddo
+        enddo
+      enddo
+
+      do ni = 1,nion
+        do k = 1,nl
+          do i = 1,nzp1
+            nuinoci(i,nfp1,k,ni) = nuinoci(i,nf,k,ni)
+            gpoci(i,nfp1,k,ni)   = gpoci(i,nf,k,ni)
+            gsoci(i,nfp1,k,ni)   = gsoci(i,nf,k,ni)
+          enddo
+        enddo
+      enddo
+
+! not quite right - but doesn't matter
+
+      do ni = 1,nion
+        do j = 1,nfp1
+          do i = 1,nzp1
+            nuinoci(i,j,nlp1,ni) = nuinoci(i,j,nl,ni)
+            gpoci(i,j,nlp1,ni)   = gpoci(i,j,nl,ni)
+            gsoci(i,j,nlp1,ni)   = gsoci(i,j,nl,ni)
+          enddo
+        enddo
+      enddo
+
+
 ! here we add in exb drift from the potential
 
 ! reduce e x b velocities below alt_crit
@@ -57,73 +94,124 @@
 
 !     vexbp
 
-    do k = 1,nl
-        do j = 1,nfp1
+! use vnp(i,nfp1,k) = vnp(i,nf,k) for boundary condtion
+
+
+    do ni = 1,nion
+      do k = 1,nl
+        do j = 1,nf
             do i = 1,nz
-                vexbp(i,j,k) = vexbp_phi(i,j,k)
-                if ( baltp(i,j,k) < alt_crit ) then
-                    arg0 = ( alt_crit - baltp(i,j,k) ) / dela
-                    fac = exp(-arg0*arg0)
-                    vexbp(i,j,k) = vexbp(i,j,k) * fac
-                endif
-                if ( baltp(i,j,k) > alt_crit_high ) then
-                    arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
-                    fac = exp(-arg0*arg0)
-                    vexbp(i,j,k) = vexbp(i,j,k) * fac
-                endif
+                factor0  = 1. + nuinoci(i,j,k,ni) ** 2
+                factor1  = nuinoci(i,j,k,ni) / factor0
+                factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
+                vexbp(i,j,k,ni) = vexbp_phi(i,j,k) / factor0 + &
+                  (vnphi(i,j,k)-vexbh_phi(i,j,k)-gpoci(i,j,k,ni)) * factor1 + &
+                   vnp(i,j,k) * factor2  
             enddo
         enddo
+        j = nfp1
+            do i = 1,nz
+                factor0  = 1. + nuinoci(i,j,k,ni) ** 2
+                factor1  = nuinoci(i,j,k,ni) / factor0
+                factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
+                vexbp(i,j,k,ni) = vexbp_phi(i,j,k) / factor0 + &
+                  (vnphi(i,j-1,k)-vexbh_phi(i,j-1,k)-gpoci(i,j,k,ni)) * factor1 +  &
+                   vnp(i,j-1,k) * factor2 
+            enddo
+      enddo
     enddo
 
 !     vexbs
 
-    do k = 1,nl
+! neutral wind component in s direction already
+! accounted for in parallel transport
+
+    do ni = 1,nion
+      do k = 1,nl
         do j = 1,nf
-            do i = 1,nzp1
-                vexbs(i,j,k) = vexbs_phi(i,j,k)
-                if ( baltp(i,j,k) < alt_crit ) then
-                    arg0 = ( alt_crit - baltp(i,j,k) ) / dela
-                    fac = exp(-arg0*arg0)
-                    vexbs(i,j,k) = vexbs(i,j,k) * fac
-                endif
-                if ( baltp(i,j,k) > alt_crit_high ) then
-                    arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
-                    fac = exp(-arg0*arg0)
-                    vexbs(i,j,k) = vexbs(i,j,k) * fac
-                endif
+            do i = 1,nz
+                factor0 = 1. + nuinoci(i,j,k,ni)**2
+                factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
+
+                vexbs(i,j,k,ni) = vexbs_phi(i,j,k) / factor0 + &
+                                  v(i,j,k) * factor2 * &
+                (xnorms(i,j,k)*gsthetax(i,j,k) + &
+                 ynorms(i,j,k)*gsthetay(i,j,k) + &
+                 znorms(i,j,k)*gsthetaz(i,j,k)   ) + &
+                                  u(i,j,k) * factor2 * &
+                (xnorms(i,j,k)*gsphix(i,j,k) + &
+                 ynorms(i,j,k)*gsphiy(i,j,k) + &
+                 znorms(i,j,k)*gsphiz(i,j,k)   ) !+ gsoci(i,j,k,ni)
             enddo
         enddo
+      enddo
+    enddo
+
+    do ni = 1,nion
+      do k = 1,nl
+        do j = 1,nf
+            i = nzp1
+                factor0 = 1. + nuinoci(i,j,k,ni)**2
+                factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
+
+                vexbs(i,j,k,ni) = vexbs_phi(i,j,k) / factor0  + &
+                                  v(i-1,j,k) * factor2 * &
+                (xnorms(i-1,j,k)*gsthetax(i-1,j,k) + &
+                 ynorms(i-1,j,k)*gsthetay(i-1,j,k) + &
+                 znorms(i-1,j,k)*gsthetaz(i-1,j,k)   ) + &
+                                  u(i-1,j,k) * factor2 * &
+                (xnorms(i-1,j,k)*gsphix(i-1,j,k) + &
+                 ynorms(i-1,j,k)*gsphiy(i-1,j,k) + &
+                 znorms(i-1,j,k)*gsphiz(i-1,j,k)   )! + gsoci(i,j,k,ni)
+        enddo
+      enddo
     enddo
 
 !     vexbh
 
-    do k = 1,nlp1
+!   set vnphi(i,j,nlp1) = vnhpi(i,j,nl)
+!   may not be quite right - but also may
+!   not matter because nlp1 is a guard cell
+!   p x B = -h
+
+    do ni = 1,nion
+      do k = 1,nl
         do j = 1,nf
-            do i = 1,nz
-                vexbh(i,j,k) = vexbh_phi(i,j,k)
-                if ( baltp(i,j,k) < alt_crit ) then
-                    arg0 = ( alt_crit - baltp(i,j,k) ) / dela
-                    fac = exp(-arg0*arg0)
-                    vexbh(i,j,k) = vexbh(i,j,k) * fac
-                endif
-                if ( baltp(i,j,k) > alt_crit_high ) then
-                    arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
-                    fac = exp(-arg0*arg0)
-                    vexbh(i,j,k) = vexbh(i,j,k) * fac
-                endif
-            enddo
+           do i = 1,nz
+              factor0  = 1. + nuinoci(i,j,k,ni) ** 2
+              factor1  = nuinoci(i,j,k,ni) / factor0
+              factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
+              vexbh(i,j,k,ni) = vexbh_phi(i,j,k) / factor0 - &
+                (vnp(i,j,k) + vexbp_phi(i,j,k) - gpoci(i,j,k,ni)) * factor1 +  &
+                         vnphi(i,j,k) * factor2
+           enddo
+        enddo
+      enddo
+      k = nlp1
+        do j = 1,nf
+          do i = 1,nz
+              factor0  = 1. + nuinoci(i,j,k,ni) ** 2
+              factor1  = nuinoci(i,j,k,ni) / factor0
+              factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
+              vexbh(i,j,k,ni) = vexbh_phi(i,j,k) / factor0 - &
+                (vnp(i,j,k-1) + vexbp_phi(i,j,k-1) - gpoci(i,j,k,ni)) * factor1 +  &
+                 vnphi(i,j,k-1) * factor2
+          enddo
         enddo
     enddo
 
+
 ! limit e x b velocities
+
+  do ni = 1,nion
 
     do k = 1,nl
         do j = 1,nfp1
             do i = 1,nz
-                if (vexbp(i,j,k) > 0.) &
-                vexbp(i,j,k) = amin1(vexbp(i,j,k),vexb_max)
-                if (vexbp(i,j,k) < 0.) &
-                vexbp(i,j,k) = amax1(vexbp(i,j,k),-vexb_max)
+                if (vexbp(i,j,k,ni) > 0.) &
+                vexbp(i,j,k,ni) = amin1(vexbp(i,j,k,ni),vexb_max)
+                if (vexbp(i,j,k,ni) < 0.) &
+                vexbp(i,j,k,ni) = amax1(vexbp(i,j,k,ni),-vexb_max)
             enddo
         enddo
     enddo
@@ -132,10 +220,10 @@
     do k = 1,nl
         do j = 1,nf
             do i = 1,nzp1
-                if (vexbs(i,j,k) > 0.) &
-                vexbs(i,j,k) = amin1(vexbs(i,j,k),vexb_max)
-                if (vexbs(i,j,k) < 0.) &
-                vexbs(i,j,k) = amax1(vexbs(i,j,k),-vexb_max)
+                if (vexbs(i,j,k,ni) > 0.) &
+                vexbs(i,j,k,ni) = amin1(vexbs(i,j,k,ni),vexb_max)
+                if (vexbs(i,j,k,ni) < 0.) &
+                vexbs(i,j,k,ni) = amax1(vexbs(i,j,k,ni),-vexb_max)
             enddo
         enddo
     enddo
@@ -143,13 +231,15 @@
     do k = 1,nlp1
         do j = 1,nf
             do i = 1,nz
-                if (vexbh(i,j,k) > 0.) &
-                vexbh(i,j,k) = amin1(vexbh(i,j,k),vexb_max)
-                if (vexbh(i,j,k) < 0.) &
-                vexbh(i,j,k) = amax1(vexbh(i,j,k),-vexb_max)
+                if (vexbh(i,j,k,ni) > 0.) &
+                vexbh(i,j,k,ni) = amin1(vexbh(i,j,k,ni),vexb_max)
+                if (vexbh(i,j,k,ni) < 0.) &
+                vexbh(i,j,k,ni) = amax1(vexbh(i,j,k,ni),-vexb_max)
             enddo
         enddo
     enddo
+
+  enddo
 
 
 ! output e x b velocities
@@ -157,9 +247,12 @@
     do k = 1,nl
         do j = 1,nf
             do i = 1,nz
-                u1p(i,j,k) = vexbp(i,j,k)
-                u2s(i,j,k) = vexbs(i,j,k)
-                u3h(i,j,k) = vexbh(i,j,k)
+!!$                u1p(i,j,k) = vexbp_phi(i,j,k)
+!!$                u2s(i,j,k) = vexbs_phi(i,j,k)
+!!$                u3h(i,j,k) = vexbh_phi(i,j,k)
+                u1p(i,j,k) = vexbp(i,j,k,ptop)
+                u2s(i,j,k) = vexbs(i,j,k,ptop)
+                u3h(i,j,k) = vexbh(i,j,k,ptop)
             enddo
         enddo
     enddo
@@ -191,28 +284,28 @@
 ! altered to consider NS pole densities
 
     do ni = nion1,nion2
-        do k = 1,nl
+        do k = 2,nlm1
             do j = 2,nf
                 do i = 1,nz
-                    if ( vexbp(i,j,k) >= 0 ) then
-                        fluxnp(i,j,k,ni) = deni(i,j-1,k,ni) * vexbp(i,j,k)
-                        fluxtp(i,j,k,ni) = ti(i,j-1,k,ni)   * vexbp(i,j,k)
+                    if ( vexbp(i,j,k,ni) >= 0 ) then
+                        fluxnp(i,j,k,ni) = deni(i,j-1,k,ni) * vexbp(i,j,k,ni)
+                        fluxtp(i,j,k,ni) = ti(i,j-1,k,ni)   * vexbp(i,j,k,ni)
                     else
-                        fluxnp(i,j,k,ni) = deni(i,j,k,ni) * vexbp(i,j,k)
-                        fluxtp(i,j,k,ni) = ti(i,j,k,ni)   * vexbp(i,j,k)
+                        fluxnp(i,j,k,ni) = deni(i,j,k,ni) * vexbp(i,j,k,ni)
+                        fluxtp(i,j,k,ni) = ti(i,j,k,ni)   * vexbp(i,j,k,ni)
                     endif
                 enddo
             enddo
         enddo
     enddo
 
-    do k = 1,nl
+    do k = 2,nlm1
         do j = 2,nf
             do i = 1,nz
-                if ( vexbp(i,j,k) >= 0 ) then
-                    fluxtep(i,j,k) = te(i,j-1,k) * vexbp(i,j,k)
+                if ( vexbp(i,j,k,pthp) >= 0 ) then
+                    fluxtep(i,j,k) = te(i,j-1,k) * vexbp(i,j,k,pthp)
                 else
-                    fluxtep(i,j,k) = te(i,j,k)   * vexbp(i,j,k)
+                    fluxtep(i,j,k) = te(i,j,k)   * vexbp(i,j,k,pthp)
                 endif
             enddo
         enddo
@@ -221,27 +314,27 @@
 !      flux at nfp1 (near magnetic north/south poles)
 
     do ni = nion1,nion2
-        do k = 1,nl
+        do k = 2,nlm1
             j = nfp1
             do i = 1,nz
-                if ( vexbp(i,j,k) >= 0 ) then
-                    fluxnp(i,j,k,ni) = deni(i,j-1,k,ni) * vexbp(i,j,k)
-                    fluxtp(i,j,k,ni) = ti(i,j-1,k,ni)   * vexbp(i,j,k)
+                if ( vexbp(i,j,k,ni) >= 0 ) then
+                    fluxnp(i,j,k,ni) = deni(i,j-1,k,ni) * vexbp(i,j,k,ni)
+                    fluxtp(i,j,k,ni) = ti(i,j-1,k,ni)   * vexbp(i,j,k,ni)
                 else
-                    fluxnp(i,j,k,ni) = deni_mnp(i,ni) * vexbp(i,j,k)
-                    fluxtp(i,j,k,ni) = ti_mnp(i,ni)   * vexbp(i,j,k)
+                    fluxnp(i,j,k,ni) = deni_mnp(i,ni) * vexbp(i,j,k,ni)
+                    fluxtp(i,j,k,ni) = ti_mnp(i,ni)   * vexbp(i,j,k,ni)
                 endif
             enddo
         enddo
     enddo
 
-    do k = 1,nl
+    do k = 2,nlm1
         j = nfp1
         do i = 1,nz
-            if ( vexbp(i,j,k) >= 0 ) then
-                fluxtep(i,j,k) = te(i,j-1,k) * vexbp(i,j,k)
+            if ( vexbp(i,j,k,pthp) >= 0 ) then
+                fluxtep(i,j,k) = te(i,j-1,k) * vexbp(i,j,k,pthp)
             else
-                fluxtep(i,j,k) = te_mnp(i)   * vexbp(i,j,k)
+                fluxtep(i,j,k) = te_mnp(i)   * vexbp(i,j,k,pthp)
             endif
         enddo
     enddo
@@ -249,28 +342,28 @@
 ! calculate flux in s-direction at interface
 
     do ni = nion1,nion2
-        do k = 1,nl
+        do k = 2,nlm1
             do j = 1,nf
                 do i = 2,nz
-                    if ( vexbs(i,j,k) >= 0 ) then
-                        fluxns(i,j,k,ni) = deni(i-1,j,k,ni) * vexbs(i,j,k)
-                        fluxts(i,j,k,ni) = ti(i-1,j,k,ni)   * vexbs(i,j,k)
+                    if ( vexbs(i,j,k,ni) >= 0 ) then
+                        fluxns(i,j,k,ni) = deni(i-1,j,k,ni) * vexbs(i,j,k,ni)
+                        fluxts(i,j,k,ni) = ti(i-1,j,k,ni)   * vexbs(i,j,k,ni)
                     else
-                        fluxns(i,j,k,ni) = deni(i,j,k,ni) * vexbs(i,j,k)
-                        fluxts(i,j,k,ni) = ti(i,j,k,ni)   * vexbs(i,j,k)
+                        fluxns(i,j,k,ni) = deni(i,j,k,ni) * vexbs(i,j,k,ni)
+                        fluxts(i,j,k,ni) = ti(i,j,k,ni)   * vexbs(i,j,k,ni)
                     endif
                 enddo
             enddo
         enddo
     enddo
 
-    do k = 1,nl
+    do k = 2,nlm1
         do j = 1,nf
             do i = 2,nz
-                if ( vexbs(i,j,k) >= 0 ) then
-                    fluxtes(i,j,k) = te(i-1,j,k) * vexbs(i,j,k)
+                if ( vexbs(i,j,k,pthp) >= 0 ) then
+                    fluxtes(i,j,k) = te(i-1,j,k) * vexbs(i,j,k,pthp)
                 else
-                    fluxtes(i,j,k) = te(i,j,k)   * vexbs(i,j,k)
+                    fluxtes(i,j,k) = te(i,j,k)   * vexbs(i,j,k,pthp)
                 endif
             enddo
         enddo
@@ -282,13 +375,14 @@
         do k = 2,nl
             do j = 1,nf
                 do i = 1,nz
-                    if ( vexbh(i,j,k) >= 0 ) then
-                        fluxnh(i,j,k,ni) = deni(i,j,k-1,ni) * vexbh(i,j,k)
-                        fluxth(i,j,k,ni) = ti(i,j,k-1,ni)   * vexbh(i,j,k)
+                    if ( vexbh(i,j,k,ni) >= 0 ) then
+                        fluxnh(i,j,k,ni) = deni(i,j,k-1,ni) * vexbh(i,j,k,ni)
+                        fluxth(i,j,k,ni) = ti(i,j,k-1,ni)   * vexbh(i,j,k,ni)
                     else
-                        fluxnh(i,j,k,ni) = deni(i,j,k,ni) * vexbh(i,j,k)
-                        fluxth(i,j,k,ni) = ti(i,j,k,ni)   * vexbh(i,j,k)
+                        fluxnh(i,j,k,ni) = deni(i,j,k,ni) * vexbh(i,j,k,ni)
+                        fluxth(i,j,k,ni) = ti(i,j,k,ni)   * vexbh(i,j,k,ni)
                     endif
+      if ( ni == ptmgp ) u5(i,j,k) = fluxnh(i,j,k,ni)
                 enddo
             enddo
         enddo
@@ -297,10 +391,10 @@
     do k = 2,nl
         do j = 1,nf
             do i = 1,nz
-                if ( vexbh(i,j,k) >= 0 ) then
-                    fluxteh(i,j,k) = te(i,j,k-1) * vexbh(i,j,k)
+                if ( vexbh(i,j,k,pthp) >= 0 ) then
+                    fluxteh(i,j,k) = te(i,j,k-1) * vexbh(i,j,k,pthp)
                 else
-                    fluxteh(i,j,k) = te(i,j,k)   * vexbh(i,j,k)
+                    fluxteh(i,j,k) = te(i,j,k)   * vexbh(i,j,k,pthp)
                 endif
             enddo
         enddo
@@ -309,29 +403,48 @@
 !      calculate flux in h-direction at interface (k = 1)
 !      (invoke periodic boundary condition)
                                                                                    
-    do ni = nion1,nion2
-        do j = 1,nf
-            do i = 1,nz
-                if ( vexbh(i,j,1) >= 0 ) then
-                    fluxnh(i,j,1,ni) = deni(i,j,nl,ni) * vexbh(i,j,1)
-                    fluxth(i,j,1,ni) = ti(i,j,nl,ni)   * vexbh(i,j,1)
-                else
-                    fluxnh(i,j,1,ni) = deni(i,j,1,ni) * vexbh(i,j,1)
-                    fluxth(i,j,1,ni) = ti(i,j,1,ni)   * vexbh(i,j,1)
-                endif
-            enddo
-        enddo
-    enddo
+!    do ni = nion1,nion2
+!        do j = 1,nf
+!            do i = 1,nz
+!                if ( vexbh(i,j,1) >= 0 ) then
+!                    fluxnh(i,j,1,ni) = deni(i,j,nl,ni) * vexbh(i,j,1)
+!                    fluxth(i,j,1,ni) = ti(i,j,nl,ni)   * vexbh(i,j,1)
+!                else
+!                    fluxnh(i,j,1,ni) = deni(i,j,1,ni) * vexbh(i,j,1)
+!                    fluxth(i,j,1,ni) = ti(i,j,1,ni)   * vexbh(i,j,1)
+!                endif
+!            enddo
+!        enddo
+!    enddo
 
-    do j = 1,nf
-        do i = 1,nz
-            if ( vexbh(i,j,1) >= 0 ) then
-                fluxteh(i,j,1) = te(i,j,nl) * vexbh(i,j,1)
-            else
-                fluxteh(i,j,1) = te(i,j,1)  * vexbh(i,j,1)
-            endif
-        enddo
-    enddo
+!      NOT SURE THIS IS RIGHT BECAUSE EACH WORKER
+!      IS NOT PERIODIC IN PHI
+!      BUT MAY NOT MATTER BECAUSE K = 1 IS A GUARD CELL
+
+!!$    do ni = nion1,nion2
+!!$        do j = 1,nf
+!!$            do i = 1,nz
+!!$                if ( vexbh(i,j,1,ni) >= 0 ) then
+!!$                    fluxnh(i,j,1,ni) = deni(i,j,1,ni) * vexbh(i,j,1,ni)
+!!$                    fluxth(i,j,1,ni) = ti(i,j,1,ni)   * vexbh(i,j,1,ni)
+!!$                else
+!!$                    fluxnh(i,j,1,ni) = deni(i,j,1,ni) * vexbh(i,j,1,ni)
+!!$                    fluxth(i,j,1,ni) = ti(i,j,1,ni)   * vexbh(i,j,1,ni)
+!!$                endif
+!!$                 if ( ni == pto2p ) u3(i,j,1) = fluxnh(i,j,1,ni)
+!!$            enddo
+!!$        enddo
+!!$    enddo
+!!$
+!!$    do j = 1,nf
+!!$        do i = 1,nz
+!!$            if ( vexbh(i,j,1,pthp) >= 0 ) then
+!!$                fluxteh(i,j,1) = te(i,j,nl) * vexbh(i,j,1,pthp)
+!!$            else
+!!$                fluxteh(i,j,1) = te(i,j,1)  * vexbh(i,j,1,pthp)
+!!$            endif
+!!$        enddo
+!!$    enddo
 
 ! update total particle number and density
 ! and temperatures
@@ -340,7 +453,7 @@
 !       speaking, not exactly correct)
 
     do ni = nion1,nion2
-        do k = 1,nlm1
+        do k = 2,nlm1
             do j = 2,nf
                 do i = 2,nzm1
                     denic(i,j,k,ni) = denic(i,j,k,ni) &
@@ -369,12 +482,16 @@
                         print *,'Ti fixed',i,j,k,ni
                         ti(i,j,k,ni) = 200.
                     endif
+       if ( ni == ptmgp ) then
+         u3(i,j,k) =  fluxnh(i,j,k,ni)
+         u4(i,j,k) =  fluxnh(i,j,k+1,ni)
+        endif
                 enddo
             enddo
         enddo
     enddo
 
-    do k = 1,nlm1
+    do k = 2,nlm1
         do j = 2,nf
             do i = 2,nzm1
                 tec(i,j,k) = tec(i,j,k) &
@@ -395,58 +512,66 @@
 
 !      for k = nl
 
-    do ni = nion1,nion2
-        do j = 2,nf
-            do i = 2,nzm1
-                k                = nl
-                deni0            = deni(i,j,k,ni)
-                ti0              = ti(i,j,k,ni)
-                denic(i,j,nl,ni) = denic(i,j,nl,ni) &
-                + dt * ( areap(i,j,nl)   * fluxnp(i,j,nl,ni) - &
-                areap(i,j+1,nl) * fluxnp(i,j+1,nl,ni) ) &
-                + dt * ( areas(i,j,nl)   * fluxns(i,j,nl,ni) - &
-                areas(i+1,j,nl) * fluxns(i+1,j,nl,ni) ) &
-                + dt * ( areah(i,j,nl)   * fluxnh(i,j,nl,ni) - &
-                areah(i,j,1)    * fluxnh(i,j,1,ni) )
-                deni(i,j,nl,ni)  = denic(i,j,nl,ni) / vol(i,j,nl)
-                if ( deni(i,j,nl,ni) <= 0. ) &
-                deni(i,j,nl,ni) = deni0
-                tic(i,j,nl,ni) = tic(i,j,nl,ni) &
-                + dt * ( areap(i,j,nl)   * fluxtp(i,j,nl,ni) - &
-                areap(i,j+1,nl) * fluxtp(i,j+1,nl,ni) ) &
-                + dt * ( areas(i,j,nl)   * fluxts(i,j,nl,ni) - &
-                areas(i+1,j,nl) * fluxts(i+1,j,nl,ni) ) &
-                + dt * ( areah(i,j,nl)   * fluxth(i,j,nl,ni) - &
-                areah(i,j,1)    * fluxth(i,j,1,ni) )
-                ti(i,j,nl,ni)  = tic(i,j,nl,ni) / vol(i,j,nl)
-                if ( ti(i,j,nl,ni) <= 0. ) &
-                ti(i,j,nl,ni) = ti0
-            enddo
-        enddo
-    enddo
-
-    do j = 2,nf
-        do i = 2,nzm1
-            te0 = te(i,j,nl)
-            tec(i,j,nl) = tec(i,j,nl) &
-            + dt * ( areap(i,j,nl)   * fluxtep(i,j,nl) - &
-            areap(i,j+1,nl) * fluxtep(i,j+1,nl) ) &
-            + dt * ( areas(i,j,nl)   * fluxtes(i,j,nl) - &
-            areas(i+1,j,nl) * fluxtes(i+1,j,nl) ) &
-            + dt * ( areah(i,j,nl)   * fluxteh(i,j,nl) - &
-            areah(i,j,1)    * fluxteh(i,j,1) )
-            te(i,j,nl)  = tec(i,j,nl) / vol(i,j,nl)
-            if ( te(i,j,nl) <= 0. ) &
-            te(i,j,nl) = te0
-        enddo
-    enddo
-
+!!$    do ni = nion1,nion2
+!!$        do j = 2,nf
+!!$            do i = 2,nzm1
+!!$                k                = nl
+!!$                deni0            = deni(i,j,k,ni)
+!!$                ti0              = ti(i,j,k,ni)
+!!$
+!!$                denic(i,j,nl,ni) = denic(i,j,nl,ni) &
+!!$                + dt * ( areap(i,j,nl)   * fluxnp(i,j,nl,ni) - &
+!!$                areap(i,j+1,nl) * fluxnp(i,j+1,nl,ni) ) &
+!!$                + dt * ( areas(i,j,nl)   * fluxns(i,j,nl,ni) - &
+!!$                areas(i+1,j,nl) * fluxns(i+1,j,nl,ni) ) &
+!!$                + dt * ( areah(i,j,nl)   * fluxnh(i,j,nl,ni) - &
+!!$                areah(i,j,1)    * fluxnh(i,j,1,ni) )
+!!$
+!!$       if ( ni == ptmgp ) then
+!!$         u3(i,j,k) =  fluxnh(i,j,k,ni) 
+!!$         u4(i,j,k) =  fluxnh(i,j,k,ni) 
+!!$        endif
+!!$
+!!$                deni(i,j,nl,ni)  = denic(i,j,nl,ni) / vol(i,j,nl)
+!!$
+!!$                if ( deni(i,j,nl,ni) <= 0. ) &
+!!$                deni(i,j,nl,ni) = deni0
+!!$                tic(i,j,nl,ni) = tic(i,j,nl,ni) &
+!!$                + dt * ( areap(i,j,nl)   * fluxtp(i,j,nl,ni) - &
+!!$                areap(i,j+1,nl) * fluxtp(i,j+1,nl,ni) ) &
+!!$                + dt * ( areas(i,j,nl)   * fluxts(i,j,nl,ni) - &
+!!$                areas(i+1,j,nl) * fluxts(i+1,j,nl,ni) ) &
+!!$                + dt * ( areah(i,j,nl)   * fluxth(i,j,nl,ni) - &
+!!$                areah(i,j,1)    * fluxth(i,j,1,ni) )
+!!$                ti(i,j,nl,ni)  = tic(i,j,nl,ni) / vol(i,j,nl)
+!!$                if ( ti(i,j,nl,ni) <= 0. ) &
+!!$                ti(i,j,nl,ni) = ti0
+!!$            enddo
+!!$        enddo
+!!$    enddo
+!!$
+!!$    do j = 2,nf
+!!$        do i = 2,nzm1
+!!$            te0 = te(i,j,nl)
+!!$            tec(i,j,nl) = tec(i,j,nl) &
+!!$            + dt * ( areap(i,j,nl)   * fluxtep(i,j,nl) - &
+!!$            areap(i,j+1,nl) * fluxtep(i,j+1,nl) ) &
+!!$            + dt * ( areas(i,j,nl)   * fluxtes(i,j,nl) - &
+!!$            areas(i+1,j,nl) * fluxtes(i+1,j,nl) ) &
+!!$            + dt * ( areah(i,j,nl)   * fluxteh(i,j,nl) - &
+!!$            areah(i,j,1)    * fluxteh(i,j,1) )
+!!$            te(i,j,nl)  = tec(i,j,nl) / vol(i,j,nl)
+!!$            if ( te(i,j,nl) <= 0. ) &
+!!$            te(i,j,nl) = te0
+!!$        enddo
+!!$    enddo
+!!$
 
 
 ! fill cells at j = 1 and nf with j = 2 and nfm1
 
     do ni = nion1,nion2
-        do k = 1,nl
+        do k = 2,nlm1
             do i = 2,nzm1
                 deni(i,1,k,ni)  = deni(i,2,k,ni)
             !             deni(i,nf,k,ni) = deni(i,nfm1,k,ni)
@@ -456,7 +581,7 @@
         enddo
     enddo
 
-    do k = 1,nl
+    do k = 2,nlm1
         do i = 2,nzm1
             te(i,1,k)    = te(i,2,k)
         enddo

@@ -30,6 +30,8 @@
     open ( unit=715, file='deniu5.dat'     ,form='unformatted' )
     open ( unit=716, file='deniu6.dat'     ,form='unformatted' )
     open ( unit=717, file='deniu7.dat'     ,form='unformatted' )
+    open ( unit=718, file='deniu8.dat'     ,form='unformatted' )
+    open ( unit=719, file='deniu9.dat'     ,form='unformatted' )
     open ( unit=1718, file='deneu.dat'      ,form='unformatted' )
     open ( unit=811, file='tiu1.dat'     ,form='unformatted' )
     open ( unit=812, file='tiu2.dat'     ,form='unformatted' )
@@ -45,6 +47,8 @@
     open ( unit=915, file='vsiu5.dat'     ,form='unformatted' )
     open ( unit=916, file='vsiu6.dat'     ,form='unformatted' )
     open ( unit=917, file='vsiu7.dat'     ,form='unformatted' )
+    open ( unit=918, file='vsiu8.dat'     ,form='unformatted' )
+    open ( unit=919, file='vsiu9.dat'     ,form='unformatted' )
     open ( unit=1711, file='dennu1.dat'     ,form='unformatted' )
     open ( unit=1712, file='dennu2.dat'     ,form='unformatted' )
     open ( unit=1713, file='dennu3.dat'     ,form='unformatted' )
@@ -95,7 +99,7 @@
 
     subroutine output ( hr,ntm,istep,phi,denit,dennt,vsit,sumvsit, &
     tit,ut,vt,vpit,tet,tnt,u1t, &
-    u2t,u3t,u4t,vnqt,vnpt,vnphit,jpt,jphit, &
+    u2t,u3t,u4t,u5t,vnqt,vnpt,vnphit,jpt,jphit, &
     u1pt,u2st,u3ht,sigmapict,sigmahict, &
     sigmapt,sigmaht )
 
@@ -111,7 +115,7 @@
     real :: sumvsit(nz,nf,nlt,nion)
     real :: tet(nz,nf,nlt),tit(nz,nf,nlt,nion),tnt(nz,nf,nlt)
     real :: ut(nz,nf,nlt),vt(nz,nf,nlt),vpit(nz,nf,nlt)
-    real :: u1t(nz,nf,nlt),u2t(nz,nf,nlt),u3t(nz,nf,nlt),u4t(nz,nf,nlt)
+    real :: u1t(nz,nf,nlt),u2t(nz,nf,nlt),u3t(nz,nf,nlt),u4t(nz,nf,nlt),u5t(nz,nf,nlt)
     real :: vnqt(nz,nf,nlt),vnpt(nz,nf,nlt),vnphit(nz,nf,nlt)
     real :: jpt(nz,nf,nlt),jphit(nz,nf,nlt)
     real :: phi(nnx,nny)
@@ -120,13 +124,13 @@
     real :: sigmapt(nz,nf,nlt),sigmaht(nz,nf,nlt)
 
     real, dimension(:,:,:), allocatable :: denit1,denit2,denit3, &
-    denit4,denit5,denit6,denit7,denet
+    denit4,denit5,denit6,denit7,denet,denit8,denit9
     real, dimension(:,:,:), allocatable :: dennt1,dennt2,dennt3, &
     dennt4,dennt5,dennt6,dennt7
     real, dimension(:,:,:), allocatable :: tit1,tit2,tit3, &
     tit4,tit5,tit6,tit7
     real, dimension(:,:,:), allocatable ::vsit1,vsit2,vsit3, &
-    vsit4,vsit5,vsit6,vsit7
+    vsit4,vsit5,vsit6,vsit7,vsit8,vsit9
 
 
     hr24   = mod (hr,24.)
@@ -146,7 +150,8 @@
     allocate &
     (denit1(nz,nf,nlt),denit2(nz,nf,nlt),denit3(nz,nf,nlt), &
     denit4(nz,nf,nlt),denit5(nz,nf,nlt),denit6(nz,nf,nlt), &
-    denit7(nz,nf,nlt),denet(nz,nf,nlt))
+    denit7(nz,nf,nlt),denet(nz,nf,nlt),denit8(nz,nf,nlt),&
+    denit9(nz,nf,nlt))
 
 
     do k = 1,nlt
@@ -159,6 +164,8 @@
                 denit5(i,j,k) = denit(i,j,k,5)
                 denit6(i,j,k) = denit(i,j,k,6)
                 denit7(i,j,k) = denit(i,j,k,7)
+                denit8(i,j,k) = denit(i,j,k,8)
+                denit9(i,j,k) = denit(i,j,k,9)
             enddo
         enddo
     enddo
@@ -184,11 +191,11 @@
         write(713) denit3
         write(714) denit4
         write(715) denit5
-    !         write(716) denit6
-    !         write(717) denit7
+        write(718) denit8
+        write(719) denit9
 
     deallocate (denit1,denit2,denit3, &
-                denit4,denit5,denit6,denit7,denet)
+                denit4,denit5,denit6,denit7,denet,denit8,denit9)
 
     allocate &
     (dennt1(nz,nf,nlt),dennt2(nz,nf,nlt),dennt3(nz,nf,nlt), &
@@ -253,7 +260,7 @@
     allocate &
     (vsit1(nz,nf,nlt),vsit2(nz,nf,nlt),vsit3(nz,nf,nlt), &
     vsit4(nz,nf,nlt),vsit5(nz,nf,nlt),vsit6(nz,nf,nlt), &
-    vsit7(nz,nf,nlt))
+    vsit7(nz,nf,nlt),vsit8(nz,nf,nlt),vsit9(nz,nf,nlt))
 
 
     do k = 1,nlt
@@ -266,6 +273,8 @@
                 vsit5(i,j,k) = vsit(i,j,k,5)
                 vsit6(i,j,k) = vsit(i,j,k,6)
                 vsit7(i,j,k) = vsit(i,j,k,7)
+                vsit8(i,j,k) = vsit(i,j,k,8)
+                vsit9(i,j,k) = vsit(i,j,k,9)
             enddo
         enddo
     enddo
@@ -277,10 +286,12 @@
         write(915) vsit5
     !         write(916) vsit6
     !         write(917) vsit7
+             write(918) vsit8
+             write(919) vsit9
 
 
     deallocate (vsit1,vsit2,vsit3, &
-    vsit4,vsit5,vsit6,vsit7)
+    vsit4,vsit5,vsit6,vsit7,vsit8,vsit9)
 
     !         write(78) vnt
     !         write(81) t1t
@@ -293,7 +304,7 @@
         write(85) u2t
         write(86) u3t
         write(87) u4t
-    !         write(88) u5t
+        write(88) u5t
     !         write(93) hipct
     !         write(94) hihct
         write(95) sigmapt
