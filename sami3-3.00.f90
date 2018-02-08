@@ -2284,8 +2284,7 @@
         !          loss(i,ptop) = loss(i,ptop) + 1./decay_time
         endif
 
-!        gs(i,nll)   =  gzero * xrg(i,nfl,nll) &
-!        * ( re / (re + alts(i,nfl,nll)) ) ** 2
+    !     loss term for mg+ and fe+ (from mcneil et al. (2001) - fig 2)
 
         if ( alts(i,nfl,nll) < 110. ) then
             xloss_110  = 1.e-13
@@ -2298,11 +2297,6 @@
             loss(i,ptfep)  = 1.e-13          
         endif
 
-    !        gs(i,nll)   = -gzero
-    !     .                 * ( re / (re + alts(i,nfl,nll)) ) ** 2
-    !     .                 * ( gsrx(i,nfl,nll)*bdirsx(i,nfl,nll) +
-    !     .                     gsry(i,nfl,nll)*bdirsy(i,nfl,nll) +
-    !     .                     gsrz(i,nfl,nll)*bdirsz(i,nfl,nll)  )
 
         if ( alts(i,nfl,nll) > 2000. ) then
             loss(i,ptmgp)  = 1./decay_time

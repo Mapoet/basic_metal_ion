@@ -1,6 +1,6 @@
 
  &go 
-  maxstep  =   2,
+  maxstep  =   100,
   hrmax    =   24.,
   dthr     =   .25e-5,
   hrpr     =   0., 
@@ -14,7 +14,7 @@
   day      =   328,
   mmass    =   48 ,
   nion1    =    1,
-  nion2    =    7,
+  nion2    =    9,
   hrinit   =    0.,
   tvn0     =    1.,
   tvexb0   =    1.,
@@ -52,4 +52,8 @@
   lhwm93     = .false.,
   lhwm14     = .true., 
   anu_drag0  = 4.e3,
+  alt_metal  = 105.,
+  del_alt_metal  = 10.,
+  deni_mg0 = 1.e3,
+  deni_fe0 = 1.e3,
 &end
