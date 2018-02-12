@@ -2302,15 +2302,15 @@
             loss(i,ptfep)  = 1./decay_time
         endif
 
-!        gs(i,nll)   =  gzero * xrg(i,nfl,nll) &
-!        * ( re / (re + alts(i,nfl,nll)) ) ** 2
+        gs(i,nll)   =  gzero * xrg(i,nfl,nll) &
+        * ( re / (re + alts(i,nfl,nll)) ) ** 2
 
 
-            gs(i,nll)   = -gzero &
-                          * ( re / (re + alts(i,nfl,nll)) ) ** 2 &
-                          * ( gsrx(i,nfl,nll)*bdirsx(i,nfl,nll) + &
-                              gsry(i,nfl,nll)*bdirsy(i,nfl,nll) + &
-                              gsrz(i,nfl,nll)*bdirsz(i,nfl,nll)  ) 
+!            gs(i,nll)   = -gzero &
+!                          * ( re / (re + alts(i,nfl,nll)) ) ** 2 &
+!                          * ( gsrx(i,nfl,nll)*bdirsx(i,nfl,nll) + &
+!                              gsry(i,nfl,nll)*bdirsy(i,nfl,nll) + &
+!                              gsrz(i,nfl,nll)*bdirsz(i,nfl,nll)  ) 
 
     ! K     centrifugal force (see notes 2012/01/04)
 
