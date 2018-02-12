@@ -107,6 +107,11 @@
                 vexbp(i,j,k,ni) = vexbp_phi(i,j,k) / factor0 + &
                   (vnphi(i,j,k)-vexbh_phi(i,j,k)-gpoci(i,j,k,ni)) * factor1 + &
                    vnp(i,j,k) * factor2  
+                if ( baltp(i,j,k) > alt_crit_high ) then
+                    arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
+                    fac = exp(-arg0*arg0)
+                    vexbp(i,j,k,ni) = vexbp(i,j,k,ni) * fac
+                endif
             enddo
         enddo
         j = nfp1
@@ -117,6 +122,11 @@
                 vexbp(i,j,k,ni) = vexbp_phi(i,j,k) / factor0 + &
                   (vnphi(i,j-1,k)-vexbh_phi(i,j-1,k)-gpoci(i,j,k,ni)) * factor1 +  &
                    vnp(i,j-1,k) * factor2 
+                if ( baltp(i,j,k) > alt_crit_high ) then
+                    arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
+                    fac = exp(-arg0*arg0)
+                    vexbp(i,j,k,ni) = vexbp(i,j,k,ni) * fac
+                endif
             enddo
       enddo
     enddo
@@ -142,6 +152,11 @@
                 (xnorms(i,j,k)*gsphix(i,j,k) + &
                  ynorms(i,j,k)*gsphiy(i,j,k) + &
                  znorms(i,j,k)*gsphiz(i,j,k)   ) !+ gsoci(i,j,k,ni)
+                if ( baltp(i,j,k) > alt_crit_high ) then
+                    arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
+                    fac = exp(-arg0*arg0)
+                    vexbs(i,j,k,ni) = vexbs(i,j,k,ni) * fac
+                endif
             enddo
         enddo
       enddo
@@ -163,6 +178,11 @@
                 (xnorms(i-1,j,k)*gsphix(i-1,j,k) + &
                  ynorms(i-1,j,k)*gsphiy(i-1,j,k) + &
                  znorms(i-1,j,k)*gsphiz(i-1,j,k)   )! + gsoci(i,j,k,ni)
+                if ( baltp(i,j,k) > alt_crit_high ) then
+                    arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
+                    fac = exp(-arg0*arg0)
+                    vexbs(i,j,k,ni) = vexbs(i,j,k,ni) * fac
+                endif
         enddo
       enddo
     enddo
@@ -184,6 +204,11 @@
               vexbh(i,j,k,ni) = vexbh_phi(i,j,k) / factor0 - &
                 (vnp(i,j,k) + vexbp_phi(i,j,k) - gpoci(i,j,k,ni)) * factor1 +  &
                          vnphi(i,j,k) * factor2
+                if ( baltp(i,j,k) > alt_crit_high ) then
+                    arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
+                    fac = exp(-arg0*arg0)
+                    vexbh(i,j,k,ni) = vexbh(i,j,k,ni) * fac
+                endif
            enddo
         enddo
       enddo
@@ -196,6 +221,11 @@
               vexbh(i,j,k,ni) = vexbh_phi(i,j,k) / factor0 - &
                 (vnp(i,j,k-1) + vexbp_phi(i,j,k-1) - gpoci(i,j,k,ni)) * factor1 +  &
                  vnphi(i,j,k-1) * factor2
+                if ( baltp(i,j,k) > alt_crit_high ) then
+                    arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
+                    fac = exp(-arg0*arg0)
+                    vexbh(i,j,k,ni) = vexbh(i,j,k,ni) * fac
+                endif
           enddo
         enddo
     enddo
@@ -284,7 +314,7 @@
 ! altered to consider NS pole densities
 
     do ni = nion1,nion2
-        do k = 2,nlm1
+        do k = 1,nl
             do j = 2,nf
                 do i = 1,nz
                     if ( vexbp(i,j,k,ni) >= 0 ) then
@@ -299,7 +329,7 @@
         enddo
     enddo
 
-    do k = 2,nlm1
+    do k = 1,nl
         do j = 2,nf
             do i = 1,nz
                 if ( vexbp(i,j,k,pthp) >= 0 ) then
@@ -314,7 +344,7 @@
 !      flux at nfp1 (near magnetic north/south poles)
 
     do ni = nion1,nion2
-        do k = 2,nlm1
+        do k = 1,nl
             j = nfp1
             do i = 1,nz
                 if ( vexbp(i,j,k,ni) >= 0 ) then
@@ -328,7 +358,7 @@
         enddo
     enddo
 
-    do k = 2,nlm1
+    do k = 1,nl
         j = nfp1
         do i = 1,nz
             if ( vexbp(i,j,k,pthp) >= 0 ) then
@@ -342,7 +372,7 @@
 ! calculate flux in s-direction at interface
 
     do ni = nion1,nion2
-        do k = 2,nlm1
+        do k = 1,nl
             do j = 1,nf
                 do i = 2,nz
                     if ( vexbs(i,j,k,ni) >= 0 ) then
@@ -357,7 +387,7 @@
         enddo
     enddo
 
-    do k = 2,nlm1
+    do k = 1,nl
         do j = 1,nf
             do i = 2,nz
                 if ( vexbs(i,j,k,pthp) >= 0 ) then
