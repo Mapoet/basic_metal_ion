@@ -1190,7 +1190,7 @@
     call mpi_bcast(alt_crit_avg,1,MPI_REAL,0,MPI_COMM_WORLD,ierr)
     call mpi_bcast(blat_max4,1,MPI_REAL,0,MPI_COMM_WORLD,ierr)
     call mpi_bcast(blat_min,1,MPI_REAL,0,MPI_COMM_WORLD,ierr)
-    call mpi_bcast(snn,7,MPI_REAL,0,MPI_COMM_WORLD,ierr)
+    call mpi_bcast(snn,nneut,MPI_REAL,0,MPI_COMM_WORLD,ierr)
     call mpi_bcast(stn,1,MPI_REAL,0,MPI_COMM_WORLD,ierr)
     call mpi_bcast(denmin,1,MPI_REAL,0,MPI_COMM_WORLD,ierr)
     call mpi_bcast(alt_crit,1,MPI_REAL,0,MPI_COMM_WORLD,ierr)
