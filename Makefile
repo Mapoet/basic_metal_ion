@@ -13,13 +13,13 @@ OBJ= parameter_mod.o  namelist_mod.o variable_mod.o message_passing_mod.o chemis
 
 # intel ifort
 
-  f90 = mpif90 -fp-model strict -save -O2 -mcmodel=large -shared-intel
-  f77 = ifort  -fp-model strict -save -O2 -mcmodel=large -shared-intel
+#  f90 = mpif90 -fp-model strict -save -O2 -mcmodel=large -shared-intel
+#  f77 = ifort  -fp-model strict -save -O2 -mcmodel=large -shared-intel
 
 # debug
 
-#  f90 = mpif90 -save -C -traceback -shared-intel -vec_report0
-#  f77 = ifort  -save -C -traceback -shared-intel -vec_report0
+  f90 = mpif90 -save -C -traceback -shared-intel -mcmodel=large
+  f77 = ifort  -save -C -traceback -shared-intel -mcmodel=large
 
 .SUFFIXES : .o .f90 .f 
 

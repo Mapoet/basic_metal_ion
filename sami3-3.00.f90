@@ -727,7 +727,7 @@
     ! already done in initialization
 
         if (restart) then
-            do nll = 1,nl
+            do nll = 2,nl-1
                 call neutambt (hrinit,nll)
             enddo
         endif
@@ -736,7 +736,9 @@
 
     ! parallel transport
 
-            do nll = 1,nl
+    ! Below is  nll = 2,nl-1 because of guard cells
+
+            do nll = 2,nl-1
                 do nfl = 1,nf
                     call zenith (hrut,nfl,nll)
                     call transprt (nfl,nll)
@@ -947,7 +949,7 @@
         ! update neutrals
 
             if( tneut >= 0.25 ) then
-                do nll = 1,nl
+                do nll = 2,nl-1
                     call neutambt (hrut,nll)
                 enddo
                 tneut = 0.
@@ -1881,7 +1883,7 @@
     ! neutral density, temperature, and neutral wind
 
         if ( .NOT. restart ) then
-            do nll = 1,nl
+            do nll = 2,nl-1
                 call neutambt (hrinit,nll)
             enddo
         endif

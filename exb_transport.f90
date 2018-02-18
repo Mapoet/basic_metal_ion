@@ -412,7 +412,7 @@
                         fluxnh(i,j,k,ni) = deni(i,j,k,ni) * vexbh(i,j,k,ni)
                         fluxth(i,j,k,ni) = ti(i,j,k,ni)   * vexbh(i,j,k,ni)
                     endif
-      if ( ni == ptmgp ) u5(i,j,k) = fluxnh(i,j,k,ni)
+!      if ( ni == ptmgp ) u5(i,j,k) = fluxnh(i,j,k,ni)
                 enddo
             enddo
         enddo
@@ -434,18 +434,17 @@
 !      (invoke periodic boundary condition)
 
 !  modify: extrapolate
-
  
     do ni = nion1,nion2
         do j = 1,nf
             do i = 1,nz
                if ( vexbh(i,j,1,ni) >= 0 ) then
-                 del_blat = (blatp(i,j,3)-blatp(i,j,1)) / &
-                           (blatp(i,j,2)-blatp(i,j,1))
+                 del_blon = (blonp(i,j,3)-blonp(i,j,1)) / &
+                           (blonp(i,j,2)-blonp(i,j,1))
                  xdeni    = deni(i,j,3,ni) - &
-                           del_blat * ( deni(i,j,3,ni) - deni(i,j,2,ni) )
+                           del_blon * ( deni(i,j,3,ni) - deni(i,j,2,ni) )
                  xti      = ti(i,j,3,ni) -   &
-                           del_blat * ( ti(i,j,3,ni) - ti(i,j,2,ni) )
+                           del_blon * ( ti(i,j,3,ni) - ti(i,j,2,ni) )
                  fluxnh(i,j,1,ni) = xdeni * vexbh(i,j,1,ni)
                  fluxth(i,j,1,ni) = xti   * vexbh(i,j,1,ni)
                 else
@@ -459,10 +458,10 @@
     do j = 1,nf
         do i = 1,nz
             if ( vexbh(i,j,1,pthp) >= 0 ) then
-              del_blat = (blatp(i,j,3)-blatp(i,j,1)) / &
-                         (blatp(i,j,2)-blatp(i,j,1))
+              del_blon = (blonp(i,j,3)-blonp(i,j,1)) / &
+                         (blonp(i,j,2)-blonp(i,j,1))
               xte      = te(i,j,3) - &
-                         del_blat * ( te(i,j,3) - te(i,j,2) )
+                         del_blon * ( te(i,j,3) - te(i,j,2) )
               fluxteh(i,j,1) = xte * vexbh(i,j,1,pthp)
             else
                 fluxteh(i,j,1) = te(i,j,1)  * vexbh(i,j,1,pthp)
@@ -506,10 +505,10 @@
                         print *,'Ti fixed',i,j,k,ni
                         ti(i,j,k,ni) = 200.
                     endif
-       if ( ni == ptmgp ) then
-         u3(i,j,k) =  fluxnh(i,j,k,ni)
-         u4(i,j,k) =  fluxnh(i,j,k+1,ni)
-        endif
+!       if ( ni == ptmgp ) then
+!         u3(i,j,k) =  fluxnh(i,j,k,ni)
+!         u4(i,j,k) =  fluxnh(i,j,k+1,ni)
+!        endif
                 enddo
             enddo
         enddo
@@ -586,8 +585,7 @@
     enddo
 
 
-
-! fill cells at j = 1 and nf with j = 2 and nfm1
+! fill cells at j = 1  with j = 2 
 
     do ni = nion1,nion2
         do k = 2,nlm1
