@@ -1,8 +1,7 @@
-
  &go 
-  maxstep  =   2,
+  maxstep  =   1000000,
   hrmax    =   24.,
-  dthr     =   .25e-5,
+  dthr     =   .25,
   hrpr     =   0., 
   dt0      =   4.,
   rmin     =  80., 
@@ -47,6 +46,7 @@
   lcr      = .false.,
   lvs      = .false.,
   lweimer  = .true.,   ! set lvs = .false. if .true
+!  lweimer  = .false.,   ! set lvs = .false. if .true
   decay_time = 6.,
   pcrit      = 8.,
   lhwm93     = .false.,

@@ -22,6 +22,7 @@ module parameter_mod
 !      number of grid cells in longitudinal direction per worker
 
     integer,parameter ::  nl   = 32, &
+!    integer,parameter ::  nl   = 18, &
                           nlp1 = nl + 1, &
                           nlm1 = nl - 1  
 
