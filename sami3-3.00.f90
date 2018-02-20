@@ -736,6 +736,7 @@
 
     ! parallel transport
 
+
             do nll = 1,nl
                 do nfl = 1,nf
                     call zenith (hrut,nfl,nll)
@@ -1882,7 +1883,7 @@
 
         if ( .NOT. restart ) then
             do nll = 1,nl
-                call neutambt (hrinit,nll)
+              call neutambt (hrinit,nll)
             enddo
         endif
 
@@ -2298,6 +2299,13 @@
 
 
         if ( alts(i,nfl,nll) > 2000. ) then
+            loss(i,ptmgp)  = 1./decay_time
+            loss(i,ptfep)  = 1./decay_time
+        endif
+
+! heavy handed loss at high latitude above 80 degrees
+
+        if ( abs(glats(i,nfl,nll)) .gt. 80. ) then
             loss(i,ptmgp)  = 1./decay_time
             loss(i,ptfep)  = 1./decay_time
         endif
