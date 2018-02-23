@@ -92,6 +92,9 @@
     dela_high     = 2. * re
     dela = 20.
 
+! took gp out of vexbp/h: already included in E
+! added gs to vexbs
+
 !     vexbp
 
 ! use vnp(i,nfp1,k) = vnp(i,nf,k) for boundary condtion
@@ -105,7 +108,8 @@
                 factor1  = nuinoci(i,j,k,ni) / factor0
                 factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
                 vexbp(i,j,k,ni) = vexbp_phi(i,j,k) / factor0 + &
-                  (vnphi(i,j,k)-vexbh_phi(i,j,k)-gpoci(i,j,k,ni)) * factor1 + &
+!                  (vnphi(i,j,k)-vexbh_phi(i,j,k)-gpoci(i,j,k,ni)) * factor1 + &
+                  (vnphi(i,j,k)-vexbh_phi(i,j,k)) * factor1 + &
                    vnp(i,j,k) * factor2  
                 if ( baltp(i,j,k) > alt_crit_high ) then
                     arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
@@ -120,7 +124,8 @@
                 factor1  = nuinoci(i,j,k,ni) / factor0
                 factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
                 vexbp(i,j,k,ni) = vexbp_phi(i,j,k) / factor0 + &
-                  (vnphi(i,j-1,k)-vexbh_phi(i,j-1,k)-gpoci(i,j,k,ni)) * factor1 +  &
+!                  (vnphi(i,j-1,k)-vexbh_phi(i,j-1,k)-gpoci(i,j,k,ni)) * factor1 +  &
+                  (vnphi(i,j-1,k)-vexbh_phi(i,j-1,k)) * factor1 +  &
                    vnp(i,j-1,k) * factor2 
                 if ( baltp(i,j,k) > alt_crit_high ) then
                     arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
@@ -141,8 +146,8 @@
         do j = 1,nf
             do i = 1,nz
                 factor0 = 1. + nuinoci(i,j,k,ni)**2
+                factor1  = nuinoci(i,j,k,ni) / factor0
                 factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
-
                 vexbs(i,j,k,ni) = vexbs_phi(i,j,k) / factor0 + &
                                   v(i,j,k) * factor2 * &
                 (xnorms(i,j,k)*gsthetax(i,j,k) + &
@@ -151,7 +156,7 @@
                                   u(i,j,k) * factor2 * &
                 (xnorms(i,j,k)*gsphix(i,j,k) + &
                  ynorms(i,j,k)*gsphiy(i,j,k) + &
-                 znorms(i,j,k)*gsphiz(i,j,k)   ) !+ gsoci(i,j,k,ni)
+                 znorms(i,j,k)*gsphiz(i,j,k)   ) + factor1 * gsoci(i,j,k,ni)
                 if ( baltp(i,j,k) > alt_crit_high ) then
                     arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
                     fac = exp(-arg0*arg0)
@@ -167,8 +172,8 @@
         do j = 1,nf
             i = nzp1
                 factor0 = 1. + nuinoci(i,j,k,ni)**2
+                factor1  = nuinoci(i,j,k,ni) / factor0
                 factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
-
                 vexbs(i,j,k,ni) = vexbs_phi(i,j,k) / factor0  + &
                                   v(i-1,j,k) * factor2 * &
                 (xnorms(i-1,j,k)*gsthetax(i-1,j,k) + &
@@ -177,7 +182,7 @@
                                   u(i-1,j,k) * factor2 * &
                 (xnorms(i-1,j,k)*gsphix(i-1,j,k) + &
                  ynorms(i-1,j,k)*gsphiy(i-1,j,k) + &
-                 znorms(i-1,j,k)*gsphiz(i-1,j,k)   )! + gsoci(i,j,k,ni)
+                 znorms(i-1,j,k)*gsphiz(i-1,j,k)   ) + factor1 * gsoci(i,j,k,ni)
                 if ( baltp(i,j,k) > alt_crit_high ) then
                     arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
                     fac = exp(-arg0*arg0)
@@ -202,7 +207,8 @@
               factor1  = nuinoci(i,j,k,ni) / factor0
               factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
               vexbh(i,j,k,ni) = vexbh_phi(i,j,k) / factor0 - &
-                (vnp(i,j,k) + vexbp_phi(i,j,k) - gpoci(i,j,k,ni)) * factor1 +  &
+!                (vnp(i,j,k) + vexbp_phi(i,j,k) - gpoci(i,j,k,ni)) * factor1 +  &
+                (vnp(i,j,k) + vexbp_phi(i,j,k)) * factor1 +  &
                          vnphi(i,j,k) * factor2
                 if ( baltp(i,j,k) > alt_crit_high ) then
                     arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
@@ -219,7 +225,8 @@
               factor1  = nuinoci(i,j,k,ni) / factor0
               factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
               vexbh(i,j,k,ni) = vexbh_phi(i,j,k) / factor0 - &
-                (vnp(i,j,k-1) + vexbp_phi(i,j,k-1) - gpoci(i,j,k,ni)) * factor1 +  &
+!                (vnp(i,j,k-1) + vexbp_phi(i,j,k-1) - gpoci(i,j,k,ni)) * factor1 +  &
+                (vnp(i,j,k-1) + vexbp_phi(i,j,k-1)) * factor1 +  &
                  vnphi(i,j,k-1) * factor2
                 if ( baltp(i,j,k) > alt_crit_high ) then
                     arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
