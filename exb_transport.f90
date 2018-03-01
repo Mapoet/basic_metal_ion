@@ -108,12 +108,12 @@
                 factor1  = nuinoci(i,j,k,ni) / factor0
                 factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
                 vexbp(i,j,k,ni) = vexbp_phi(i,j,k) / factor0 - &
-                                  vexbh_phi(i,j,k)) * factor1 + &
+                                  vexbh_phi(i,j,k) * factor1 + &
                    u(i,j,k) * factor1 * &
                     (xnormp(i,j,k)*gsphix(i,j,k) + &
                      ynormp(i,j,k)*gsphiy(i,j,k) + &
                      znormp(i,j,k)*gsphiz(i,j,k)   ) + &
-                   v(i,j,k) * factor2 * 
+                   v(i,j,k) * factor2 * &
                     (xnormp(i,j,k)*gsthetax(i,j,k) + &
                      ynormp(i,j,k)*gsthetay(i,j,k) + &
                      znormp(i,j,k)*gsthetaz(i,j,k)   ) 
@@ -138,12 +138,12 @@
                 factor1  = nuinoci(i,j,k,ni) / factor0
                 factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
                 vexbp(i,j,k,ni) = vexbp_phi(i,j,k) / factor0 - &
-                                  vexbh_phi(i,j,k)) * factor1 + &
+                                  vexbh_phi(i,j,k) * factor1 + &
                    u(i,j-1,k) * factor1 * &
                     (xnormp(i,j,k)*gsphix(i,j-1,k) + &
                      ynormp(i,j,k)*gsphiy(i,j-1,k) + &
                      znormp(i,j,k)*gsphiz(i,j-1,k)   ) + &
-                   v(i,j-1,k) * factor2 * 
+                   v(i,j-1,k) * factor2 * &
                     (xnormp(i,j,k)*gsthetax(i,j-1,k) + &
                      ynormp(i,j,k)*gsthetay(i,j-1,k) + &
                      znormp(i,j,k)*gsthetaz(i,j-1,k)   ) 
@@ -232,12 +232,12 @@
               factor1  = nuinoci(i,j,k,ni) / factor0
               factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
               vexbh(i,j,k,ni) = vexbh_phi(i,j,k) / factor0 + &
-                                vexbp_phi(i,j,k)) * factor1 - &
-                  v(i,j,k) * factor1 * +
+                                vexbp_phi(i,j,k) * factor1 - &
+                  v(i,j,k) * factor1 * &
                    (xnormh(i,j,k)*gsthetax(i,j,k) + &
                     ynormh(i,j,k)*gsthetay(i,j,k) + &
-                    znormh(i,j,k)*gsthetaz(i,j,k)    ) + 
-                  u(i,j,k) * factor2 * +
+                    znormh(i,j,k)*gsthetaz(i,j,k)    ) + &
+                  u(i,j,k) * factor2 * &
                    (xnormh(i,j,k)*gsphix(i,j,k) + &
                     ynormh(i,j,k)*gsphiy(i,j,k) + &
                     znormh(i,j,k)*gsphiz(i,j,k)    ) 
@@ -262,11 +262,11 @@
               factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
               vexbh(i,j,k,ni) = vexbh_phi(i,j,k) / factor0 + &
                                 vexbp_phi(i,j,k) * factor1 - &
-                  v(i,j,k-1) * factor1 * +
+                  v(i,j,k-1) * factor1 * &
                    (xnormh(i,j,k)*gsthetax(i,j,k-1) + &
                     ynormh(i,j,k)*gsthetay(i,j,k-1) + &
-                    znormh(i,j,k)*gsthetaz(i,j,k-1)    ) + 
-                  u(i,j,k-1) * factor2 * +
+                    znormh(i,j,k)*gsthetaz(i,j,k-1)    ) + &
+                  u(i,j,k-1) * factor2 * &
                    (xnormh(i,j,k)*gsphix(i,j,k-1) + &
                     ynormh(i,j,k)*gsphiy(i,j,k-1) + &
                     znormh(i,j,k)*gsphiz(i,j,k-1)    ) 
