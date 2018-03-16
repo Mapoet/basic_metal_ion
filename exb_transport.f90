@@ -131,6 +131,7 @@
         enddo
 
 ! use j-1 for neutrals (approximation)
+! use 0.5 vexbh_phi at j-1 because vexbh_phi=0 at pole
 
         j = nfp1
             do i = 1,nz
@@ -138,7 +139,7 @@
                 factor1  = nuinoci(i,j,k,ni) / factor0
                 factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
                 vexbp(i,j,k,ni) = vexbp_phi(i,j,k) / factor0 - &
-                                  vexbh_phi(i,j,k) * factor1 + &
+                             0.5 * vexbh_phi(i,j-1,k) * factor1 + &
                    u(i,j-1,k) * factor1 * &
                     (xnormp(i,j,k)*gsphix(i,j-1,k) + &
                      ynormp(i,j,k)*gsphiy(i,j-1,k) + &
@@ -261,7 +262,7 @@
               factor1  = nuinoci(i,j,k,ni) / factor0
               factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
               vexbh(i,j,k,ni) = vexbh_phi(i,j,k) / factor0 + &
-                                vexbp_phi(i,j,k) * factor1 - &
+                                vexbp_phi(i,j,k-1) * factor1 - &
                   v(i,j,k-1) * factor1 * &
                    (xnormh(i,j,k)*gsthetax(i,j,k-1) + &
                     ynormh(i,j,k)*gsthetay(i,j,k-1) + &

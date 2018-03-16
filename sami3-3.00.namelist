@@ -1,11 +1,11 @@
  &go 
-  maxstep  =   1000000,
+  maxstep  =   10,
   hrmax    =   24.,
   dthr     =   .25,
   hrpr     =   0., 
   dt0      =   4.,
   rmin     =  80., 
-  altmin   =  50.,
+  altmin   =  70.,
   fbar     =  173.,
   f10p7    =  182.,
   ap       =    21,
@@ -22,7 +22,7 @@
   vw       =    0.
   gamss    =    .1,
   alt_crit_avg = 6370.
-  blat_max4 = 89.,
+  blat_max4 = 80.,
 !  blat_min  = 6.85,  ! 90 km
   blat_min  = 6.25,
   snn      =    1.,1.,1.,1.,1.,1.,1.,1.,1.,
@@ -45,7 +45,7 @@
   lmadala  = .true.,
   lcr      = .false.,
   lvs      = .false.,
-  lweimer  = .true.,   ! set lvs = .false. if .true
+  lweimer  = .false.,   ! set lvs = .false. if .true
 !  lweimer  = .false.,   ! set lvs = .false. if .true
   decay_time = 6.,
   pcrit      = 8.,
