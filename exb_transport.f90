@@ -116,12 +116,7 @@
                    v(i,j,k) * factor2 * &
                     (xnormp(i,j,k)*gsthetax(i,j,k) + &
                      ynormp(i,j,k)*gsthetay(i,j,k) + &
-                     znormp(i,j,k)*gsthetaz(i,j,k)   ) 
-
-!                  (vnphi(i,j,k)-vexbh_phi(i,j,k)-gpoci(i,j,k,ni)) * factor1 + &
-!                  (vnphi(i,j,k)-vexbh_phi(i,j,k)) * factor1 + &
-!                   vnp(i,j,k) * factor2  
-
+                     znormp(i,j,k)*gsthetaz(i,j,k)   ) + factor1 * gpoci(i,j,k,ni)
                 if ( baltp(i,j,k) > alt_crit_high ) then
                     arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
                     fac = exp(-arg0*arg0)
@@ -139,6 +134,8 @@
                 factor1  = nuinoci(i,j,k,ni) / factor0
                 factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
                 vexbp(i,j,k,ni) = vexbp_phi(i,j,k) / factor0 - &
+!     interpolate vexbh_phi to nfp1
+!     assume vexbh_phi = 0 at poles
                              0.5 * vexbh_phi(i,j-1,k) * factor1 + &
                    u(i,j-1,k) * factor1 * &
                     (xnormp(i,j,k)*gsphix(i,j-1,k) + &
@@ -147,12 +144,7 @@
                    v(i,j-1,k) * factor2 * &
                     (xnormp(i,j,k)*gsthetax(i,j-1,k) + &
                      ynormp(i,j,k)*gsthetay(i,j-1,k) + &
-                     znormp(i,j,k)*gsthetaz(i,j-1,k)   ) 
-
-!                  (vnphi(i,j-1,k)-vexbh_phi(i,j-1,k)-gpoci(i,j,k,ni)) * factor1 +  &
-!                  (vnphi(i,j-1,k)-vexbh_phi(i,j-1,k)) * factor1 +  &
-!                   vnp(i,j-1,k) * factor2 
-
+                     znormp(i,j,k)*gsthetaz(i,j-1,k)   ) + factor1 * gpoci(i,j,k,ni)
                 if ( baltp(i,j,k) > alt_crit_high ) then
                     arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
                     fac = exp(-arg0*arg0)
@@ -242,11 +234,6 @@
                    (xnormh(i,j,k)*gsphix(i,j,k) + &
                     ynormh(i,j,k)*gsphiy(i,j,k) + &
                     znormh(i,j,k)*gsphiz(i,j,k)    ) 
-         
-!                (vnp(i,j,k) + vexbp_phi(i,j,k) - gpoci(i,j,k,ni)) * factor1 +  &
-!                (-vnp(i,j,k) + vexbp_phi(i,j,k)) * factor1 +  &
-!                         vnphi(i,j,k) * factor2
-
                 if ( baltp(i,j,k) > alt_crit_high ) then
                     arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
                     fac = exp(-arg0*arg0)
@@ -262,7 +249,9 @@
               factor1  = nuinoci(i,j,k,ni) / factor0
               factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
               vexbh(i,j,k,ni) = vexbh_phi(i,j,k) / factor0 + &
-                                vexbp_phi(i,j,k-1) * factor1 - &
+!     extrapolate vexbp_phi to nlp1
+!     assume longitude grid is uniform
+              (2. * vexbp_phi(i,j,k-2) - vexbp_phi(i,j,k-1)) * factor1 - &
                   v(i,j,k-1) * factor1 * &
                    (xnormh(i,j,k)*gsthetax(i,j,k-1) + &
                     ynormh(i,j,k)*gsthetay(i,j,k-1) + &
@@ -271,11 +260,6 @@
                    (xnormh(i,j,k)*gsphix(i,j,k-1) + &
                     ynormh(i,j,k)*gsphiy(i,j,k-1) + &
                     znormh(i,j,k)*gsphiz(i,j,k-1)    ) 
-
-!                (vnp(i,j,k-1) + vexbp_phi(i,j,k-1) - gpoci(i,j,k,ni)) * factor1 +  &
-!                (-vnp(i,j,k-1) + vexbp_phi(i,j,k-1)) * factor1 +  &
-!                 vnphi(i,j,k-1) * factor2
-
                 if ( baltp(i,j,k) > alt_crit_high ) then
                     arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
                     fac = exp(-arg0*arg0)
@@ -328,16 +312,22 @@
 
 
 ! output e x b velocities
+! for mg+
+
+    nio = ptmgp
 
     do k = 1,nl
         do j = 1,nf
             do i = 1,nz
-!!$                u1p(i,j,k) = vexbp_phi(i,j,k)
-!!$                u2s(i,j,k) = vexbs_phi(i,j,k)
-!!$                u3h(i,j,k) = vexbh_phi(i,j,k)
-                u1p(i,j,k) = vexbp(i,j,k,ptop)
-                u2s(i,j,k) = vexbs(i,j,k,ptop)
-                u3h(i,j,k) = vexbh(i,j,k,ptop)
+                u1p(i,j,k) = vexbp(i,j,k,nio)
+                u2s(i,j,k) = vexbs(i,j,k,nio)
+                u3h(i,j,k) = vexbh(i,j,k,nio)
+                factor0  = 1. + nuinoci(i,j,k,nio) ** 2
+                factor1  = nuinoci(i,j,k,nio) / factor0
+                factor2  = nuinoci(i,j,k,nio) ** 2 / factor0
+                u3(i,j,k) = 1./factor0
+                u4(i,j,k) = factor1
+                u5(i,j,k) = factor2
             enddo
         enddo
     enddo
@@ -467,7 +457,6 @@
                         fluxnh(i,j,k,ni) = deni(i,j,k,ni) * vexbh(i,j,k,ni)
                         fluxth(i,j,k,ni) = ti(i,j,k,ni)   * vexbh(i,j,k,ni)
                     endif
-!      if ( ni == ptmgp ) u5(i,j,k) = fluxnh(i,j,k,ni)
                 enddo
             enddo
         enddo

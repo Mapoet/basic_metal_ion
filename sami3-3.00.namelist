@@ -1,7 +1,7 @@
  &go 
   maxstep  =   10,
   hrmax    =   24.,
-  dthr     =   .25,
+  dthr     =   .25e-6,
   hrpr     =   0., 
   dt0      =   4.,
   rmin     =  80., 
@@ -15,14 +15,14 @@
   nion1    =    1,
   nion2    =    9,
   hrinit   =    0.,
-  tvn0     =    1.,
-  tvexb0   =    1.,
+  tvn0     =    0.,
+  tvexb0   =    0.,
   ver      =    0.,
   veh      =    0.,
   vw       =    0.
   gamss    =    .1,
   alt_crit_avg = 6370.
-  blat_max4 = 80.,
+  blat_max4 = 88.,
 !  blat_min  = 6.85,  ! 90 km
   blat_min  = 6.25,
   snn      =    1.,1.,1.,1.,1.,1.,1.,1.,1.,
@@ -42,7 +42,7 @@
   storm_ti = 52.,
   storm_tf = 60.,
   vexb_max = 4e6,
-  lmadala  = .true.,
+  lmadala  = .false.,
   lcr      = .false.,
   lvs      = .false.,
   lweimer  = .false.,   ! set lvs = .false. if .true

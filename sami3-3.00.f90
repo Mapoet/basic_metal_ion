@@ -2306,10 +2306,10 @@
 
 ! heavy handed loss at high latitude above 80 degrees
 
-        if ( abs(glats(i,nfl,nll)) .gt. 80. ) then
-            loss(i,ptmgp)  = 1./decay_time
-            loss(i,ptfep)  = 1./decay_time
-        endif
+!        if ( abs(glats(i,nfl,nll)) .gt. 80. ) then
+!            loss(i,ptmgp)  = 1./decay_time
+!            loss(i,ptfep)  = 1./decay_time
+!        endif
 
         gs(i,nll)   =  gzero * xrg(i,nfl,nll) &
         * ( re / (re + alts(i,nfl,nll)) ) ** 2
@@ -2741,7 +2741,7 @@
             oci = 9.58e3 * bms(i,nfl,nll) * bmag / ami(ni)
             nuinoci(i,nfl,nll,ni) = nuint(i,ni)/oci
             if ( alts(i,nll,nll) >= 2000. ) nuinoci(i,nfl,nll,ni) = 1.e-6
-            gpoci(i,nfl,nll,ni)   = gp(i,nfl,nll)/oci
+            gpoci(i,nfl,nll,ni)   = -gp(i,nfl,nll)/oci  ! gp > 0 need to reverse sign
             gsoci(i,nfl,nll,ni)   = gs(i,nll)/nuint(i,ni)
       enddo
     enddo
