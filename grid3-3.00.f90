@@ -110,6 +110,33 @@
     call mpi_send(vol, nz*nf*nl, MPI_REAL, 0, 0, &
                   MPI_COMM_WORLD, ierr)
 
+        print *,'send xyznorms'
+
+    call mpi_send(xnorms, nzp1*nf*nl, MPI_REAL, 0, 0, &
+                  MPI_COMM_WORLD, ierr)
+    call mpi_send(ynorms, nzp1*nf*nl, MPI_REAL, 0, 0, &
+                  MPI_COMM_WORLD, ierr)
+    call mpi_send(znorms, nzp1*nf*nl, MPI_REAL, 0, 0, &
+                  MPI_COMM_WORLD, ierr)
+
+        print *,'send xyznormp'
+
+    call mpi_send(xnormp, nz*nfp1*nl, MPI_REAL, 0, 0, &
+                  MPI_COMM_WORLD, ierr)
+    call mpi_send(ynormp, nz*nfp1*nl, MPI_REAL, 0, 0, &
+                  MPI_COMM_WORLD, ierr)
+    call mpi_send(znormp, nz*nfp1*nl, MPI_REAL, 0, 0, &
+                  MPI_COMM_WORLD, ierr)
+
+        print *,'send xyznormh'
+
+    call mpi_send(xnormh, nz*nf*nlp1, MPI_REAL, 0, 0, &
+                  MPI_COMM_WORLD, ierr)
+    call mpi_send(ynormh, nz*nf*nlp1, MPI_REAL, 0, 0, &
+                  MPI_COMM_WORLD, ierr)
+    call mpi_send(znormh, nz*nf*nlp1, MPI_REAL, 0, 0, &
+                  MPI_COMM_WORLD, ierr)
+
     end subroutine grid3_mpi
 
 

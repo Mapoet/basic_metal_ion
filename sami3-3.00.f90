@@ -1119,6 +1119,13 @@
     real, dimension(:,:,:), allocatable :: xthgt
     real, dimension(:,:,:), allocatable :: xphigt
 
+    real, dimension(:,:,:), allocatable :: xnormst,ynormst,znormst
+    real, dimension(:,:,:), allocatable :: xnormpt,ynormpt,znormpt
+    real, dimension(:,:,:), allocatable :: xnormht,ynormht,znormht
+    real, dimension(:,:,:), allocatable :: xstmp,ystmp,zstmp
+    real, dimension(:,:,:), allocatable :: xptmp,yptmp,zptmp
+    real, dimension(:,:,:), allocatable :: xhtmp,yhtmp,zhtmp
+
 !      real fism(linesuv)
 
     real    :: f1026(nz,nf,nl,91),f584(nz,nf,nl,91), &
@@ -1158,6 +1165,14 @@
         allocate (volt(nz,nf,nlt))
         allocate (xrgt(nz,nf,nlt), xthgt(nz,nf,nlt), xphigt(nz,nf,nlt))
         allocate (baltpt(nzp1,nfp1,nlt))
+
+        allocate (xnormst(nzp1,nf,nlt),ynormst(nzp1,nf,nlt),znormst(nzp1,nf,nlt))
+        allocate (xnormpt(nz,nfp1,nlt),ynormpt(nz,nfp1,nlt),znormpt(nz,nfp1,nlt))
+        allocate (xnormht(nz,nf,nlt+1),ynormht(nz,nf,nlt+1),znormht(nz,nf,nlt+1))
+        allocate (xstmp(nzp1,nf,nl),ystmp(nzp1,nf,nl),zstmp(nzp1,nf,nl))
+        allocate (xptmp(nz,nfp1,nl),yptmp(nz,nfp1,nl),zptmp(nz,nfp1,nl))
+        allocate (xhtmp(nz,nf,nlp1),yhtmp(nz,nf,nlp1),zhtmp(nz,nf,nlp1))
+
     endif
 
 ! read in parameters and initial ion density data
@@ -1630,6 +1645,77 @@
                         enddo
                     enddo
 
+                !  The three things we want to receive are x/y/znorms
+        print *,'recv xyznorms',iwrk
+                    call mpi_recv(xstmp, nzp1*nf*nl, MPI_REAL, &
+                                  iwrk, 0, MPI_COMM_WORLD, status, ierr)
+                    call mpi_recv(ystmp, nzp1*nf*nl, MPI_REAL, &
+                                  iwrk, 0, MPI_COMM_WORLD, status, ierr)
+                    call mpi_recv(zstmp, nzp1*nf*nl, MPI_REAL, &
+                                  iwrk, 0, MPI_COMM_WORLD, status, ierr)
+
+                !  Put the submatrices into the correct matrix
+
+                    do k = 2,nl-1
+                        kk = (iwrk-1)*(nl -2) + k - 1
+                        if(kk == 0) kk = nlt
+                        if(kk == nltp1) kk = 1
+                        do j = 1,nf
+                            do i = 1,nzp1
+                                xnormst(i,j,kk) = xstmp(i,j,k)
+                                ynormst(i,j,kk) = ystmp(i,j,k)
+                                znormst(i,j,kk) = zstmp(i,j,k)
+                            enddo
+                        enddo
+                    enddo
+
+                !  The three things we want to receive are x/y/znormp
+        print *,'recv xyznormp'
+                    call mpi_recv(xptmp, nz*nfp1*nl, MPI_REAL, &
+                                  iwrk, 0, MPI_COMM_WORLD, status, ierr)
+                    call mpi_recv(yptmp, nz*nfp1*nl, MPI_REAL, &
+                                  iwrk, 0, MPI_COMM_WORLD, status, ierr)
+                    call mpi_recv(zptmp, nz*nfp1*nl, MPI_REAL, &
+                                  iwrk, 0, MPI_COMM_WORLD, status, ierr)
+
+                !  Put the submatrices into the correct matrix
+
+                    do k = 2,nl-1
+                        kk = (iwrk-1)*(nl -2) + k - 1
+                        if(kk == 0) kk = nlt
+                        if(kk == nltp1) kk = 1
+                        do j = 1,nfp1
+                            do i = 1,nz
+                                xnormpt(i,j,kk) = xptmp(i,j,k)
+                                ynormpt(i,j,kk) = yptmp(i,j,k)
+                                znormpt(i,j,kk) = zptmp(i,j,k)
+                            enddo
+                        enddo
+                    enddo
+
+                !  The three things we want to receive are x/y/znormh
+        print *,'recv xyznormh'
+                    call mpi_recv(xhtmp, nz*nf*nlp1, MPI_REAL, &
+                                  iwrk, 0, MPI_COMM_WORLD, status, ierr)
+                    call mpi_recv(yhtmp, nz*nf*nlp1, MPI_REAL, &
+                                  iwrk, 0, MPI_COMM_WORLD, status, ierr)
+                    call mpi_recv(zhtmp, nz*nf*nlp1, MPI_REAL, &
+                                  iwrk, 0, MPI_COMM_WORLD, status, ierr)
+
+                !  Put the submatrices into the correct matrix
+
+                    do k = 2,nl-1
+                        kk = (iwrk-1)*(nl -2) + k - 1
+                        if(kk == 0) kk = nlt
+                        if(kk == nltp1) kk = 1
+                        do j = 1,nf
+                            do i = 1,nz
+                                xnormht(i,j,kk) = xhtmp(i,j,k)
+                                ynormht(i,j,kk) = yhtmp(i,j,k)
+                                znormht(i,j,kk) = zhtmp(i,j,k)
+                            enddo
+                        enddo
+                    enddo
 
                     ifintot = ifintot -1
                                       
@@ -1780,6 +1866,36 @@
             open ( unit=169, file='volu.dat'   ,form='unformatted' )
             write(169) volt
             close(169)
+
+            open ( unit=169, file='xnormsu.dat'   ,form='unformatted' )
+            open ( unit=176, file='ynormsu.dat'   ,form='unformatted' )
+            open ( unit=177, file='znormsu.dat'   ,form='unformatted' )
+            write(169) xnormst
+            write(176) ynormst
+            write(177) znormst
+            close(169)
+            close(176)
+            close(177)
+
+            open ( unit=169, file='xnormpu.dat'   ,form='unformatted' )
+            open ( unit=176, file='ynormpu.dat'   ,form='unformatted' )
+            open ( unit=177, file='znormpu.dat'   ,form='unformatted' )
+            write(169) xnormpt
+            write(176) ynormpt
+            write(177) znormpt
+            close(169)
+            close(176)
+            close(177)
+
+            open ( unit=169, file='xnormhu.dat'   ,form='unformatted' )
+            open ( unit=176, file='ynormhu.dat'   ,form='unformatted' )
+            open ( unit=177, file='znormhu.dat'   ,form='unformatted' )
+            write(169) xnormht
+            write(176) ynormht
+            write(177) znormht
+            close(169)
+            close(176)
+            close(177)
 
     endif
 
@@ -2186,6 +2302,14 @@
         deallocate (gsphixt,gsphiyt,gsphizt)
         deallocate (gsrxt,gsryt,gsrzt)
         deallocate (xrgt,xthgt,xphigt)
+
+        deallocate (xnormst,ynormst,znormst)
+        deallocate (xnormpt,ynormpt,znormpt)
+        deallocate (xnormht,ynormht,znormht)
+        deallocate (xstmp,ystmp,zstmp)
+        deallocate (xptmp,yptmp,zptmp)
+        deallocate (xhtmp,yhtmp,zhtmp)
+
     endif
 
     print *,' finished initialization taskid = ',taskid

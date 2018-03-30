@@ -102,21 +102,25 @@
 
     do ni = 1,nion
       do k = 1,nl
-        do j = 1,nf
+        do j = 2,nf
             do i = 1,nz
                 factor0  = 1. + nuinoci(i,j,k,ni) ** 2
                 factor1  = nuinoci(i,j,k,ni) / factor0
                 factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
+!   uu/vv are u and v at cell interface
+                uu       = 0.5 * ( u(i,j,k) + u(i,j-1,k) )
+                vv       = 0.5 * ( v(i,j,k) + v(i,j-1,k) )
                 vexbp(i,j,k,ni) = vexbp_phi(i,j,k) / factor0 - &
                                   vexbh_phi(i,j,k) * factor1 + &
-                   u(i,j,k) * factor1 * &
-                    (xnormp(i,j,k)*gsphix(i,j,k) + &
-                     ynormp(i,j,k)*gsphiy(i,j,k) + &
-                     znormp(i,j,k)*gsphiz(i,j,k)   ) + &
-                   v(i,j,k) * factor2 * &
-                    (xnormp(i,j,k)*gsthetax(i,j,k) + &
-                     ynormp(i,j,k)*gsthetay(i,j,k) + &
-                     znormp(i,j,k)*gsthetaz(i,j,k)   ) + factor1 * gpoci(i,j,k,ni)
+                   uu * factor1 * &
+                    (vpsnx(i,j,k)*gsphix(i,j,k) + &
+                     vpsny(i,j,k)*gsphiy(i,j,k) + &
+                     vpsnz(i,j,k)*gsphiz(i,j,k)   ) + &
+                   vv * factor2 * &
+                    (vpsnx(i,j,k)*gsthetax(i,j,k) + &
+                     vpsny(i,j,k)*gsthetay(i,j,k) + &
+                     vpsnz(i,j,k)*gsthetaz(i,j,k)   ) + &
+                   factor1 * gpoci(i,j,k,ni)
                 if ( baltp(i,j,k) > alt_crit_high ) then
                     arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
                     fac = exp(-arg0*arg0)
@@ -133,24 +137,58 @@
                 factor0  = 1. + nuinoci(i,j,k,ni) ** 2
                 factor1  = nuinoci(i,j,k,ni) / factor0
                 factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
+!  extrapolate uu/vv to nfp1
+                dblat    = ( blatp(i,j,k)   - blatp(i,j-1,k) ) / &
+                           ( blatp(i,j-1,k) - blatp(i,j-2,k) )
+                unf      = 0.5 * ( u(i,j-1,k) + u(i,j-2,k) )
+                unfm1    = 0.5 * ( u(i,j-2,k) + u(i,j-3,k) )
+                uu       = unf + dblat * ( unf - unfm1 )
+                vnf      = 0.5 * ( v(i,j-1,k) + v(i,j-2,k) )
+                vnfm1    = 0.5 * ( v(i,j-2,k) + v(i,j-3,k) )
+                vv       = vnf + dblat * ( vnf - vnfm1 )
                 vexbp(i,j,k,ni) = vexbp_phi(i,j,k) / factor0 - &
 !     interpolate vexbh_phi to nfp1
 !     assume vexbh_phi = 0 at poles
                              0.5 * vexbh_phi(i,j-1,k) * factor1 + &
-                   u(i,j-1,k) * factor1 * &
-                    (xnormp(i,j,k)*gsphix(i,j-1,k) + &
-                     ynormp(i,j,k)*gsphiy(i,j-1,k) + &
-                     znormp(i,j,k)*gsphiz(i,j-1,k)   ) + &
-                   v(i,j-1,k) * factor2 * &
-                    (xnormp(i,j,k)*gsthetax(i,j-1,k) + &
-                     ynormp(i,j,k)*gsthetay(i,j-1,k) + &
-                     znormp(i,j,k)*gsthetaz(i,j-1,k)   ) + factor1 * gpoci(i,j,k,ni)
+                   uu * factor1 * &
+                    (vpsnx(i,j-1,k)*gsphix(i,j-1,k) + &
+                     vpsny(i,j-1,k)*gsphiy(i,j-1,k) + &
+                     vpsnz(i,j-1,k)*gsphiz(i,j-1,k)   ) + &
+                   vv * factor2 * &
+                    (vpsnx(i,j-1,k)*gsthetax(i,j-1,k) + &
+                     vpsny(i,j-1,k)*gsthetay(i,j-1,k) + &
+                     vpsnz(i,j-1,k)*gsthetaz(i,j-1,k)   ) + &
+                   factor1 * gpoci(i,j,k,ni)
                 if ( baltp(i,j,k) > alt_crit_high ) then
                     arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
                     fac = exp(-arg0*arg0)
                     vexbp(i,j,k,ni) = vexbp(i,j,k,ni) * fac
                 endif
             enddo
+! use j=2 for neutrals (approximation)
+        j = 1
+            do i = 1,nz
+                factor0  = 1. + nuinoci(i,j,k,ni) ** 2
+                factor1  = nuinoci(i,j,k,ni) / factor0
+                factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
+                vexbp(i,j,k,ni) = vexbp_phi(i,j,k) / factor0 - &
+                                  vexbh_phi(i,j,k) * factor1 + &
+                   u(i,j+1,k) * factor1 * &
+                    (vpsnx(i,j+1,k)*gsphix(i,j+1,k) + &
+                     vpsny(i,j+1,k)*gsphiy(i,j+1,k) + &
+                     vpsnz(i,j+1,k)*gsphiz(i,j+1,k)   ) + &
+                   v(i,j+1,k) * factor2 * &
+                    (vpsnx(i,j+1,k)*gsthetax(i,j+1,k) + &
+                     vpsny(i,j+1,k)*gsthetay(i,j+1,k) + &
+                     vpsnz(i,j+1,k)*gsthetaz(i,j+1,k)   ) + &
+                   factor1 * gpoci(i,j,k,ni)
+                if ( baltp(i,j,k) > alt_crit_high ) then
+                    arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
+                    fac = exp(-arg0*arg0)
+                    vexbp(i,j,k,ni) = vexbp(i,j,k,ni) * fac
+                endif
+            enddo
+
       enddo
     enddo
 
@@ -218,22 +256,25 @@
 !   p x B = -h
 
     do ni = 1,nion
-      do k = 1,nl
+      do k = 2,nl
         do j = 1,nf
            do i = 1,nz
               factor0  = 1. + nuinoci(i,j,k,ni) ** 2
               factor1  = nuinoci(i,j,k,ni) / factor0
               factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
+!   uu/vv are u and v at cell interface
+              uu       = 0.5 * ( u(i,j,k) + u(i,j,k-1) )
+              vv       = 0.5 * ( v(i,j,k) + v(i,j,k-1) )
               vexbh(i,j,k,ni) = vexbh_phi(i,j,k) / factor0 + &
                                 vexbp_phi(i,j,k) * factor1 - &
-                  v(i,j,k) * factor1 * &
-                   (xnormh(i,j,k)*gsthetax(i,j,k) + &
-                    ynormh(i,j,k)*gsthetay(i,j,k) + &
-                    znormh(i,j,k)*gsthetaz(i,j,k)    ) + &
-                  u(i,j,k) * factor2 * &
-                   (xnormh(i,j,k)*gsphix(i,j,k) + &
-                    ynormh(i,j,k)*gsphiy(i,j,k) + &
-                    znormh(i,j,k)*gsphiz(i,j,k)    ) 
+                  vv * factor1 * &
+                   (vhsnx(i,j,k)*gsthetax(i,j,k) + &
+                    vhsny(i,j,k)*gsthetay(i,j,k) + &
+                    vhsnz(i,j,k)*gsthetaz(i,j,k)    ) + &
+                  uu * factor2 * &
+                   (vhsnx(i,j,k)*gsphix(i,j,k) + &
+                    vhsny(i,j,k)*gsphiy(i,j,k) + &
+                    vhsnz(i,j,k)*gsphiz(i,j,k)    ) 
                 if ( baltp(i,j,k) > alt_crit_high ) then
                     arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
                     fac = exp(-arg0*arg0)
@@ -248,18 +289,58 @@
               factor0  = 1. + nuinoci(i,j,k,ni) ** 2
               factor1  = nuinoci(i,j,k,ni) / factor0
               factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
+!  extrapolate uu/vv to nl+1
+!  assume longitude grid is uniform
+              unl      = 0.5 * ( u(i,j,k-1) + u(i,j,k-2) )
+              vnl      = 0.5 * ( v(i,j,k-1) + v(i,j,k-2) )
+              unlm1    = 0.5 * ( u(i,j,k-2) + u(i,j,k-3) )
+              vnlm1    = 0.5 * ( v(i,j,k-2) + v(i,j,k-3) )
+              uu       = 2. * unl - unlm1 
+              vv       = 2. * vnl - vnlm1 
               vexbh(i,j,k,ni) = vexbh_phi(i,j,k) / factor0 + &
 !     extrapolate vexbp_phi to nlp1
 !     assume longitude grid is uniform
               (2. * vexbp_phi(i,j,k-2) - vexbp_phi(i,j,k-1)) * factor1 - &
-                  v(i,j,k-1) * factor1 * &
-                   (xnormh(i,j,k)*gsthetax(i,j,k-1) + &
-                    ynormh(i,j,k)*gsthetay(i,j,k-1) + &
-                    znormh(i,j,k)*gsthetaz(i,j,k-1)    ) + &
-                  u(i,j,k-1) * factor2 * &
-                   (xnormh(i,j,k)*gsphix(i,j,k-1) + &
-                    ynormh(i,j,k)*gsphiy(i,j,k-1) + &
-                    znormh(i,j,k)*gsphiz(i,j,k-1)    ) 
+                  vv * factor1 * &
+                   (vhsnx(i,j,k-1)*gsthetax(i,j,k-1) + &
+                    vhsny(i,j,k-1)*gsthetay(i,j,k-1) + &
+                    vhsnz(i,j,k-1)*gsthetaz(i,j,k-1)    ) + &
+                  uu * factor2 * &
+                   (vhsnx(i,j,k-1)*gsphix(i,j,k-1) + &
+                    vhsny(i,j,k-1)*gsphiy(i,j,k-1) + &
+                    vhsnz(i,j,k-1)*gsphiz(i,j,k-1)    ) 
+                if ( baltp(i,j,k) > alt_crit_high ) then
+                    arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
+                    fac = exp(-arg0*arg0)
+                    vexbh(i,j,k,ni) = vexbh(i,j,k,ni) * fac
+                endif
+           enddo
+         enddo
+! nor sure important since this is ghost cell
+      k = 1
+        do j = 1,nf
+          do i = 1,nz
+              factor0  = 1. + nuinoci(i,j,k,ni) ** 2
+              factor1  = nuinoci(i,j,k,ni) / factor0
+              factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
+!  extrapolate uu/vv to nl+1
+!  assume longitude grid is uniform
+              unl1      = 0.5 * ( u(i,j,1) + u(i,j,2) )
+              vnl1      = 0.5 * ( v(i,j,1) + v(i,j,2) )
+              unl2    = 0.5 * ( u(i,j,2) + u(i,j,3) )
+              vnl2    = 0.5 * ( v(i,j,2) + v(i,j,3) )
+              uu       = 2. * unl1 - unl2 
+              vv       = 2. * vnl1 - vnl2 
+              vexbh(i,j,k,ni) = vexbh_phi(i,j,k) / factor0 + &
+              (2. * vexbp_phi(i,j,2) - vexbp_phi(i,j,3)) * factor1 - &
+                  vv * factor1 * &
+                   (vhsnx(i,j,2)*gsthetax(i,j,2) + &
+                    vhsny(i,j,2)*gsthetay(i,j,2) + &
+                    vhsnz(i,j,2)*gsthetaz(i,j,2)    ) + &
+                  uu * factor2 * &
+                   (vhsnx(i,j,2)*gsphix(i,j,2) + &
+                    vhsny(i,j,2)*gsphiy(i,j,2) + &
+                    vhsnz(i,j,2)*gsphiz(i,j,2)    ) 
                 if ( baltp(i,j,k) > alt_crit_high ) then
                     arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
                     fac = exp(-arg0*arg0)
@@ -267,6 +348,7 @@
                 endif
            enddo
         enddo
+
     enddo
 
 

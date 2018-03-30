@@ -1,7 +1,7 @@
  &go 
-  maxstep  =   10,
-  hrmax    =   24.,
-  dthr     =   .25e-6,
+  maxstep  =   2,
+  hrmax    =   72.,
+  dthr     =   .25e-5,
   hrpr     =   0., 
   dt0      =   4.,
   rmin     =  80., 
@@ -15,8 +15,8 @@
   nion1    =    1,
   nion2    =    9,
   hrinit   =    0.,
-  tvn0     =    0.,
-  tvexb0   =    0.,
+  tvn0     =    1.,
+  tvexb0   =    1.,
   ver      =    0.,
   veh      =    0.,
   vw       =    0.
@@ -42,10 +42,10 @@
   storm_ti = 52.,
   storm_tf = 60.,
   vexb_max = 4e6,
-  lmadala  = .false.,
+  lmadala  = .true.,
   lcr      = .false.,
   lvs      = .false.,
-  lweimer  = .false.,   ! set lvs = .false. if .true
+  lweimer  = .true.,   ! set lvs = .false. if .true
 !  lweimer  = .false.,   ! set lvs = .false. if .true
   decay_time = 6.,
   pcrit      = 8.,
