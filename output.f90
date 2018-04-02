@@ -82,6 +82,9 @@
     open ( unit=86, file='u3u.dat'  ,form='unformatted' )
     open ( unit=87, file='u4u.dat'  ,form='unformatted' )
     open ( unit=88, file='u5u.dat'  ,form='unformatted' )
+    open ( unit=89, file='u6u.dat'  ,form='unformatted' )
+    open ( unit=90, file='u7u.dat'  ,form='unformatted' )
+    open ( unit=91, file='u8u.dat'  ,form='unformatted' )
     open ( unit=384, file='u1pu.dat'  ,form='unformatted' )
     open ( unit=385, file='u2su.dat'  ,form='unformatted' )
     open ( unit=386, file='u3hu.dat'  ,form='unformatted' )
@@ -101,7 +104,7 @@
     tit,ut,vt,vpit,tet,tnt,u1t, &
     u2t,u3t,u4t,u5t,vnqt,vnpt,vnphit,jpt,jphit, &
     u1pt,u2st,u3ht,sigmapict,sigmahict, &
-    sigmapt,sigmaht )
+    sigmapt,sigmaht,u6t,u7t,u8t )
 
     use parameter_mod
     use variable_mod
@@ -115,7 +118,8 @@
     real :: sumvsit(nz,nf,nlt,nion)
     real :: tet(nz,nf,nlt),tit(nz,nf,nlt,nion),tnt(nz,nf,nlt)
     real :: ut(nz,nf,nlt),vt(nz,nf,nlt),vpit(nz,nf,nlt)
-    real :: u1t(nz,nf,nlt),u2t(nz,nf,nlt),u3t(nz,nf,nlt),u4t(nz,nf,nlt),u5t(nz,nf,nlt)
+    real :: u1t(nz,nf,nlt),u2t(nz,nf,nlt),u3t(nz,nf,nlt),u4t(nz,nf,nlt),&
+            u5t(nz,nf,nlt),u6t(nz,nf,nlt),u7t(nz,nf,nlt),u8t(nz,nf,nlt)
     real :: vnqt(nz,nf,nlt),vnpt(nz,nf,nlt),vnphit(nz,nf,nlt)
     real :: jpt(nz,nf,nlt),jphit(nz,nf,nlt)
     real :: phi(nnx,nny)
@@ -305,6 +309,9 @@
         write(86) u3t
         write(87) u4t
         write(88) u5t
+        write(89) u6t
+        write(90) u7t
+        write(91) u8t
     !         write(93) hipct
     !         write(94) hihct
         write(95) sigmapt

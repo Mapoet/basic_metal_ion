@@ -5,7 +5,8 @@ module misc_mod
 !     diagnostic variables
 
     real :: u1(nz,nf,nl),u2(nz,nf,nl),u3(nz,nf,nl), &
-            u4(nz,nf,nl),u5(nz,nf,nl)
+            u4(nz,nf,nl),u5(nz,nf,nl), &
+            u6(nz,nf,nl),u7(nz,nf,nl),u8(nz,nf,nl)
 
     real :: ppt(nzp1,nfp1,nlt)
     real :: blonp0t(nlt+3)

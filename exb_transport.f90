@@ -410,6 +410,9 @@
                 u3(i,j,k) = 1./factor0
                 u4(i,j,k) = factor1
                 u5(i,j,k) = factor2
+                u6(i,j,k) = vexbp_phi(i,j,k)
+                u7(i,j,k) = vexbs_phi(i,j,k)
+                u8(i,j,k) = vexbh_phi(i,j,k)
             enddo
         enddo
     enddo

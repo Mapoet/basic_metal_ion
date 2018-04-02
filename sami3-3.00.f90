@@ -41,6 +41,7 @@
 !     height integrated pedersen/hall conductivities
 
     real, dimension(:,:,:), allocatable :: u1t, u2t, u3t, u4t, u5t
+    real, dimension(:,:,:), allocatable :: u6t, u7t, u8t
     real, dimension(:,:,:), allocatable :: vnqt, vnpt, vnphit
     real, dimension(:,:,:), allocatable :: jpt, jphit
     real, dimension(:,:,:), allocatable :: u1pt, u2st, u3ht
@@ -267,7 +268,8 @@
         allocate (ut(nz,nf,nlt),vt(nz,nf,nlt),vpit(nz,nf,nlt))
         allocate (tet(nz,nf,nlt),tnt(nz,nf,nlt))
         allocate (u1t(nz,nf,nlt),u2t(nz,nf,nlt),u3t(nz,nf,nlt), &
-                 u4t(nz,nf,nlt),u5t(nz,nf,nlt))
+                 u4t(nz,nf,nlt),u5t(nz,nf,nlt),&
+                 u6t(nz,nf,nlt),u7t(nz,nf,nlt),u8t(nz,nf,nlt))
         allocate (vnqt(nz,nf,nlt),vnpt(nz,nf,nlt),vnphit(nz,nf,nlt))
         allocate (jpt(nz,nf,nlt),jphit(nz,nf,nlt))
         allocate (u1pt(nz,nf,nlt),u2st(nz,nf,nlt),u3ht(nz,nf,nlt))
@@ -429,6 +431,12 @@
                                   MPI_COMM_WORLD, status, ierr)
                     call mpi_recv(u5, nz*nf*nl, MPI_REAL, iwrk, 0, &
                                   MPI_COMM_WORLD, status, ierr)
+                    call mpi_recv(u6, nz*nf*nl, MPI_REAL, iwrk, 0, &
+                                  MPI_COMM_WORLD, status, ierr)
+                    call mpi_recv(u7, nz*nf*nl, MPI_REAL, iwrk, 0, &
+                                  MPI_COMM_WORLD, status, ierr)
+                    call mpi_recv(u8, nz*nf*nl, MPI_REAL, iwrk, 0, &
+                                  MPI_COMM_WORLD, status, ierr)
                     call mpi_recv(sigmap, nz*nf*nl, MPI_REAL, iwrk, 0, &
                                   MPI_COMM_WORLD, status, ierr)
                     call mpi_recv(sigmah, nz*nf*nl, MPI_REAL, iwrk, 0, &
@@ -501,6 +509,9 @@
                                 u3t(i,j,kk)       = u3(i,j,k)
                                 u4t(i,j,kk)       = u4(i,j,k)
                                 u5t(i,j,kk)       = u5(i,j,k)
+                                u6t(i,j,kk)       = u6(i,j,k)
+                                u7t(i,j,kk)       = u7(i,j,k)
+                                u8t(i,j,kk)       = u8(i,j,k)
                                 sigmapt(i,j,kk)   = sigmap(i,j,k)
                                 sigmaht(i,j,kk)   = sigmah(i,j,k)
                                 sigmapict(i,j,kk) = sigmapic(i,j,k)
@@ -577,7 +588,7 @@
                               sumvsit,tit,ut,vt,vpit,tet,tnt,u1t, &
                               u2t,u3t,u4t,u5t,vnqt,vnpt,vnphit,jpt,jphit, &
                               u1pt,u2st,u3ht,sigmapict,sigmahict, &
-                              sigmapt,sigmaht )
+                              sigmapt,sigmaht,u6t,u7t,u8t )
                                          
             ! write the restart files and close those files
 
@@ -1014,6 +1025,12 @@
                 call mpi_send(u4, nz*nf*nl, MPI_REAL, 0, 0, &
                               MPI_COMM_WORLD,  ierr)
                 call mpi_send(u5, nz*nf*nl, MPI_REAL, 0, 0, &
+                              MPI_COMM_WORLD,  ierr)
+                call mpi_send(u6, nz*nf*nl, MPI_REAL, 0, 0, &
+                              MPI_COMM_WORLD,  ierr)
+                call mpi_send(u7, nz*nf*nl, MPI_REAL, 0, 0, &
+                              MPI_COMM_WORLD,  ierr)
+                call mpi_send(u8, nz*nf*nl, MPI_REAL, 0, 0, &
                               MPI_COMM_WORLD,  ierr)
                 call mpi_send(sigmap, nz*nf*nl, MPI_REAL, 0, 0, &
                               MPI_COMM_WORLD, ierr)
