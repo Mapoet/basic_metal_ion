@@ -1,7 +1,7 @@
  &go 
-  maxstep  =   2,
-  hrmax    =   72.,
-  dthr     =   .25e-5,
+  maxstep  =   200000,
+  hrmax    =   .25,
+  dthr     =   .025,
   hrpr     =   0., 
   dt0      =   4.,
   rmin     =  80., 
