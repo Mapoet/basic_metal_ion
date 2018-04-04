@@ -138,14 +138,19 @@
                 factor1  = nuinoci(i,j,k,ni) / factor0
                 factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
 !  extrapolate uu/vv to nfp1
-                dblat    = ( blatp(i,j,k)   - blatp(i,j-1,k) ) / &
-                           ( blatp(i,j-1,k) - blatp(i,j-2,k) )
-                unf      = 0.5 * ( u(i,j-1,k) + u(i,j-2,k) )
-                unfm1    = 0.5 * ( u(i,j-2,k) + u(i,j-3,k) )
-                uu       = unf + dblat * ( unf - unfm1 )
-                vnf      = 0.5 * ( v(i,j-1,k) + v(i,j-2,k) )
-                vnfm1    = 0.5 * ( v(i,j-2,k) + v(i,j-3,k) )
-                vv       = vnf + dblat * ( vnf - vnfm1 )
+!  doesn't work
+!!$                dblat    = ( blatp(i,j,k)   - blatp(i,j-1,k) ) / &
+!!$                           ( blatp(i,j-1,k) - blatp(i,j-2,k) )
+!!$                unf      = 0.5 * ( u(i,j-1,k) + u(i,j-2,k) )
+!!$                unfm1    = 0.5 * ( u(i,j-2,k) + u(i,j-3,k) )
+!!$                uu       = unf + dblat * ( unf - unfm1 )
+!!$                vnf      = 0.5 * ( v(i,j-1,k) + v(i,j-2,k) )
+!!$                vnfm1    = 0.5 * ( v(i,j-2,k) + v(i,j-3,k) )
+!!$                vv       = vnf + dblat * ( vnf - vnfm1 )
+!  zero gradient
+                uu       = u(i,j-1,k)
+                vv       = v(i,j-1,k)
+
                 vexbp(i,j,k,ni) = vexbp_phi(i,j,k) / factor0 - &
 !     interpolate vexbh_phi to nfp1
 !     assume vexbh_phi = 0 at poles
@@ -188,7 +193,6 @@
                     vexbp(i,j,k,ni) = vexbp(i,j,k,ni) * fac
                 endif
             enddo
-
       enddo
     enddo
 
@@ -291,12 +295,15 @@
               factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
 !  extrapolate uu/vv to nl+1
 !  assume longitude grid is uniform
-              unl      = 0.5 * ( u(i,j,k-1) + u(i,j,k-2) )
-              vnl      = 0.5 * ( v(i,j,k-1) + v(i,j,k-2) )
-              unlm1    = 0.5 * ( u(i,j,k-2) + u(i,j,k-3) )
-              vnlm1    = 0.5 * ( v(i,j,k-2) + v(i,j,k-3) )
-              uu       = 2. * unl - unlm1 
-              vv       = 2. * vnl - vnlm1 
+!!$              unl      = 0.5 * ( u(i,j,k-1) + u(i,j,k-2) )
+!!$              vnl      = 0.5 * ( v(i,j,k-1) + v(i,j,k-2) )
+!!$              unlm1    = 0.5 * ( u(i,j,k-2) + u(i,j,k-3) )
+!!$              vnlm1    = 0.5 * ( v(i,j,k-2) + v(i,j,k-3) )
+!!$              uu       = 2. * unl - unlm1 
+!!$              vv       = 2. * vnl - vnlm1 
+!  zero gradient
+              uu       = u(i,j,k-1)
+              vv       = v(i,j,k-1)
               vexbh(i,j,k,ni) = vexbh_phi(i,j,k) / factor0 + &
 !     extrapolate vexbp_phi to nlp1
 !     assume longitude grid is uniform
@@ -325,12 +332,15 @@
               factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
 !  extrapolate uu/vv to nl+1
 !  assume longitude grid is uniform
-              unl1      = 0.5 * ( u(i,j,1) + u(i,j,2) )
-              vnl1      = 0.5 * ( v(i,j,1) + v(i,j,2) )
-              unl2    = 0.5 * ( u(i,j,2) + u(i,j,3) )
-              vnl2    = 0.5 * ( v(i,j,2) + v(i,j,3) )
-              uu       = 2. * unl1 - unl2 
-              vv       = 2. * vnl1 - vnl2 
+!!$              unl1      = 0.5 * ( u(i,j,1) + u(i,j,2) )
+!!$              vnl1      = 0.5 * ( v(i,j,1) + v(i,j,2) )
+!!$              unl2    = 0.5 * ( u(i,j,2) + u(i,j,3) )
+!!$              vnl2    = 0.5 * ( v(i,j,2) + v(i,j,3) )
+!!$              uu       = 2. * unl1 - unl2 
+!!$              vv       = 2. * vnl1 - vnl2 
+!  zero gradient
+              uu       = u(i,j,k+1)
+              vv       = v(i,j,k+1)
               vexbh(i,j,k,ni) = vexbh_phi(i,j,k) / factor0 + &
               (2. * vexbp_phi(i,j,2) - vexbp_phi(i,j,3)) * factor1 - &
                   vv * factor1 * &
