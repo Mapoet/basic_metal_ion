@@ -17,44 +17,43 @@
 
 !     Begin MPI stuff
 
-!     s cartesian grid parameters: gridding for parallel dynamics
-
-    real :: xs(nz,nf,nl),ys(nz,nf,nl),zs(nz,nf,nl)
-
-!     p cartesian grid parameters: gridding for perpendicular dynamics
-
-    real :: xp(nzp1,nfp1,nlp1),yp(nzp1,nfp1,nlp1),zp(nzp1,nfp1,nlp1)
-
-    call da_grid (xs,ys,zs,xp,yp,zp)
+    call da_grid 
 
 !     calculate geometric parameters
 
 !     vol is cell volume
      
-    call volume ( xp ,yp ,zp  )
+    call volume 
 
 !     areas is cell face area in i-direction (s)
 !     areap is cell face area in j-direction (p)
 !     areah is cell face area in k-direction (phi)
 
-    call area ( xp ,yp ,zp  )
+    call area 
 
 !     xdels is line distance in i-direction (s)
 !     xdelp is line distance in j-direction (p)
 !     xdelh is line distance in k-direction (phi)
 
-    call line ( xp ,yp ,zp  )
+    call line 
 
 !     normal: calculates normal to cell face in s-direction
 
-    call  normal  ( xp ,yp,  zp )
+    call  normal 
 
 !     normals are calculated on s-grid
 !     vpnormal: calculates e x b direction in p-direction
 !     vhnormal: calculates e x b direction in h-direction (phi)
 
-    call vpsnormal ( xs,ys,zs )
-    call vhsnormal ( xs,ys,zs )
+    call vpsnormal
+    call vhsnormal
+
+!     normals are calculated on p-grid
+!     vpnormal: calculates e x b direction in p-direction
+!     vhnormal: calculates e x b direction in h-direction (phi)
+
+    call vppnormal
+    call vhpnormal
 
 !     unit direction in geographic latitude (theta)
 !                       geographic longitude (phi)
@@ -110,7 +109,7 @@
     call mpi_send(vol, nz*nf*nl, MPI_REAL, 0, 0, &
                   MPI_COMM_WORLD, ierr)
 
-        print *,'send xyznorms'
+!        print *,'send xyznorms'
 
     call mpi_send(xnorms, nzp1*nf*nl, MPI_REAL, 0, 0, &
                   MPI_COMM_WORLD, ierr)
@@ -119,7 +118,7 @@
     call mpi_send(znorms, nzp1*nf*nl, MPI_REAL, 0, 0, &
                   MPI_COMM_WORLD, ierr)
 
-        print *,'send xyznormp'
+!        print *,'send xyznormp'
 
     call mpi_send(xnormp, nz*nfp1*nl, MPI_REAL, 0, 0, &
                   MPI_COMM_WORLD, ierr)
@@ -128,13 +127,31 @@
     call mpi_send(znormp, nz*nfp1*nl, MPI_REAL, 0, 0, &
                   MPI_COMM_WORLD, ierr)
 
-        print *,'send xyznormh'
+!        print *,'send xyznormh'
 
     call mpi_send(xnormh, nz*nf*nlp1, MPI_REAL, 0, 0, &
                   MPI_COMM_WORLD, ierr)
     call mpi_send(ynormh, nz*nf*nlp1, MPI_REAL, 0, 0, &
                   MPI_COMM_WORLD, ierr)
     call mpi_send(znormh, nz*nf*nlp1, MPI_REAL, 0, 0, &
+                  MPI_COMM_WORLD, ierr)
+
+        print *,'send vppnx/y/z'
+
+    call mpi_send(vppnx, nzp1*nfp1*nlp1, MPI_REAL, 0, 0, &
+                  MPI_COMM_WORLD, ierr)
+    call mpi_send(vppny, nzp1*nfp1*nlp1, MPI_REAL, 0, 0, &
+                  MPI_COMM_WORLD, ierr)
+    call mpi_send(vppnz, nzp1*nfp1*nlp1, MPI_REAL, 0, 0, &
+                  MPI_COMM_WORLD, ierr)
+
+        print *,'send vhpnx/y/z'
+
+    call mpi_send(vhpnx, nzp1*nfp1*nlp1, MPI_REAL, 0, 0, &
+                  MPI_COMM_WORLD, ierr)
+    call mpi_send(vhpny, nzp1*nfp1*nlp1, MPI_REAL, 0, 0, &
+                  MPI_COMM_WORLD, ierr)
+    call mpi_send(vhpnz, nzp1*nfp1*nlp1, MPI_REAL, 0, 0, &
                   MPI_COMM_WORLD, ierr)
 
     end subroutine grid3_mpi
@@ -148,7 +165,7 @@
 !     ************************
 !     ************************
 
-    subroutine da_grid(xs,ys,zs,xp,yp,zp)
+    subroutine da_grid
 
     use parameter_mod
     use namelist_mod
@@ -163,11 +180,9 @@
 !     s grid parameters: gridding for parallel dynamics
 
     real :: s(nz,nf,nl)
-    real :: xs(nz,nf,nl),ys(nz,nf,nl),zs(nz,nf,nl)
 
 !     p grid parameters: gridding for perpendicular dynamics
 
-    real :: xp(nzp1,nfp1,nlp1),yp(nzp1,nfp1,nlp1),zp(nzp1,nfp1,nlp1)
     real :: qptmp(nzp1),pval(nfp1),qpm(nfp1)
     real :: qpextra(nze+nseg+1)
     real :: fs(nz0+1),fn(nz0+1),ft(nz0+1),qpnew(nz0+1),f0(nz0+1)
@@ -746,7 +761,7 @@
 !******************************************
 !******************************************
 
-    subroutine volume(x,y,z)
+    subroutine volume
 
 !       calculate cell volume
 !       break each cell into
@@ -761,8 +776,6 @@
     use parameter_mod
     use grid_mod
 
-    real :: x(nzp1,nfp1,nlp1),y(nzp1,nfp1,nlp1) &
-    ,z(nzp1,nfp1,nlp1)
     real :: voli(nz,nf,nl),volj(nz,nf,nl),volk(nz,nf,nl)
 
 !       volume from sidei
@@ -771,21 +784,21 @@
         do j = 1,nf
             do i = 1,nz
 
-                xmid  = 0.5 * ( x(i,j,k) + x(i+1,j+1,k+1) )
-                ymid  = 0.5 * ( y(i,j,k) + y(i+1,j+1,k+1) )
-                zmid  = 0.5 * ( z(i,j,k) + z(i+1,j+1,k+1) )
+                xmid  = 0.5 * ( xp(i,j,k) + xp(i+1,j+1,k+1) )
+                ymid  = 0.5 * ( yp(i,j,k) + yp(i+1,j+1,k+1) )
+                zmid  = 0.5 * ( zp(i,j,k) + zp(i+1,j+1,k+1) )
                               
-                ax1 = x(i,j,k) - xmid
-                ay1 = y(i,j,k) - ymid
-                az1 = z(i,j,k) - zmid
+                ax1 = xp(i,j,k) - xmid
+                ay1 = yp(i,j,k) - ymid
+                az1 = zp(i,j,k) - zmid
 
-                bx1 = x(i,j+1,k) - xmid
-                by1 = y(i,j+1,k) - ymid
-                bz1 = z(i,j+1,k) - zmid
+                bx1 = xp(i,j+1,k) - xmid
+                by1 = yp(i,j+1,k) - ymid
+                bz1 = zp(i,j+1,k) - zmid
 
-                cx1 = x(i,j,k+1) - xmid
-                cy1 = y(i,j,k+1) - ymid
-                cz1 = z(i,j,k+1) - zmid
+                cx1 = xp(i,j,k+1) - xmid
+                cy1 = yp(i,j,k+1) - ymid
+                cz1 = zp(i,j,k+1) - zmid
 
                 dx1 =    by1 * cz1 - bz1 * cy1
                 dy1 = -( bx1 * cz1 - bz1 * cx1 )
@@ -794,24 +807,24 @@
                 v1 = 0.166667 * &
                 abs(( ax1 * dx1 + ay1 * dy1 + az1 * dz1 ))
 
-                ax2 = x(i,j+1,k+1) - xmid
-                ay2 = y(i,j+1,k+1) - ymid
-                az2 = z(i,j+1,k+1) - zmid
+                ax2 = xp(i,j+1,k+1) - xmid
+                ay2 = yp(i,j+1,k+1) - ymid
+                az2 = zp(i,j+1,k+1) - zmid
 
                 v2 = 0.166667 * &
                 abs(( ax2 * dx1 + ay2 * dy1 + az2 * dz1 ))
 
-                ax1 = x(i+1,j,k) - xmid
-                ay1 = y(i+1,j,k) - ymid
-                az1 = z(i+1,j,k) - zmid
+                ax1 = xp(i+1,j,k) - xmid
+                ay1 = yp(i+1,j,k) - ymid
+                az1 = zp(i+1,j,k) - zmid
 
-                bx1 = x(i+1,j+1,k) - xmid
-                by1 = y(i+1,j+1,k) - ymid
-                bz1 = z(i+1,j+1,k) - zmid
+                bx1 = xp(i+1,j+1,k) - xmid
+                by1 = yp(i+1,j+1,k) - ymid
+                bz1 = zp(i+1,j+1,k) - zmid
 
-                cx1 = x(i+1,j,k+1) - xmid
-                cy1 = y(i+1,j,k+1) - ymid
-                cz1 = z(i+1,j,k+1) - zmid
+                cx1 = xp(i+1,j,k+1) - xmid
+                cy1 = yp(i+1,j,k+1) - ymid
+                cz1 = zp(i+1,j,k+1) - zmid
 
                 dx1 =    by1 * cz1 - bz1 * cy1
                 dy1 = -( bx1 * cz1 - bz1 * cx1 )
@@ -820,9 +833,9 @@
                 v3 = 0.166667 * &
                 abs(( ax1 * dx1 + ay1 * dy1 + az1 * dz1 ))
                        
-                ax2 = x(i+1,j+1,k+1) - xmid
-                ay2 = y(i+1,j+1,k+1) - ymid
-                az2 = z(i+1,j+1,k+1) - zmid
+                ax2 = xp(i+1,j+1,k+1) - xmid
+                ay2 = yp(i+1,j+1,k+1) - ymid
+                az2 = zp(i+1,j+1,k+1) - zmid
 
                 v4 = 0.166667 * &
                 abs(( ax2 * dx1 + ay2 * dy1 + az2 * dz1 ))
@@ -839,21 +852,21 @@
         do j = 1,nf
             do i = 1,nz
 
-                xmid = 0.5 * ( x(i,j,k) + x(i+1,j+1,k+1) )
-                ymid = 0.5 * ( y(i,j,k) + y(i+1,j+1,k+1) )
-                zmid = 0.5 * ( z(i,j,k) + z(i+1,j+1,k+1) )
+                xmid = 0.5 * ( xp(i,j,k) + xp(i+1,j+1,k+1) )
+                ymid = 0.5 * ( yp(i,j,k) + yp(i+1,j+1,k+1) )
+                zmid = 0.5 * ( zp(i,j,k) + zp(i+1,j+1,k+1) )
 
-                ax1 = x(i,j,k) - xmid
-                ay1 = y(i,j,k) - ymid
-                az1 = z(i,j,k) - zmid
+                ax1 = xp(i,j,k) - xmid
+                ay1 = yp(i,j,k) - ymid
+                az1 = zp(i,j,k) - zmid
 
-                bx1 = x(i+1,j,k) - xmid
-                by1 = y(i+1,j,k) - ymid
-                bz1 = z(i+1,j,k) - zmid
+                bx1 = xp(i+1,j,k) - xmid
+                by1 = yp(i+1,j,k) - ymid
+                bz1 = zp(i+1,j,k) - zmid
 
-                cx1 = x(i,j,k+1) - xmid
-                cy1 = y(i,j,k+1) - ymid
-                cz1 = z(i,j,k+1) - zmid
+                cx1 = xp(i,j,k+1) - xmid
+                cy1 = yp(i,j,k+1) - ymid
+                cz1 = zp(i,j,k+1) - zmid
 
                 dx1 =    by1 * cz1 - bz1 * cy1
                 dy1 = -( bx1 * cz1 - bz1 * cx1 )
@@ -862,24 +875,24 @@
                 v1 = 0.166667 * &
                 abs(( ax1 * dx1 + ay1 * dy1 + az1 * dz1 ))
 
-                ax2 = x(i+1,j,k+1) - xmid
-                ay2 = y(i+1,j,k+1) - ymid
-                az2 = z(i+1,j,k+1) - zmid
+                ax2 = xp(i+1,j,k+1) - xmid
+                ay2 = yp(i+1,j,k+1) - ymid
+                az2 = zp(i+1,j,k+1) - zmid
 
                 v2 = 0.166667 * &
                 abs(( ax2 * dx1 + ay2 * dy1 + az2 * dz1 ))
 
-                ax1 = x(i,j+1,k) - xmid
-                ay1 = y(i,j+1,k) - ymid
-                az1 = z(i,j+1,k) - zmid
+                ax1 = xp(i,j+1,k) - xmid
+                ay1 = yp(i,j+1,k) - ymid
+                az1 = zp(i,j+1,k) - zmid
 
-                bx1 = x(i+1,j+1,k) - xmid
-                by1 = y(i+1,j+1,k) - ymid
-                bz1 = z(i+1,j+1,k) - zmid
+                bx1 = xp(i+1,j+1,k) - xmid
+                by1 = yp(i+1,j+1,k) - ymid
+                bz1 = zp(i+1,j+1,k) - zmid
 
-                cx1 = x(i,j+1,k+1) - xmid
-                cy1 = y(i,j+1,k+1) - ymid
-                cz1 = z(i,j+1,k+1) - zmid
+                cx1 = xp(i,j+1,k+1) - xmid
+                cy1 = yp(i,j+1,k+1) - ymid
+                cz1 = zp(i,j+1,k+1) - zmid
 
                 dx1 =    by1 * cz1 - bz1 * cy1
                 dy1 = -( bx1 * cz1 - bz1 * cx1 )
@@ -888,9 +901,9 @@
                 v3 = 0.166667 * &
                 abs(( ax1 * dx1 + ay1 * dy1 + az1 * dz1 ))
                        
-                ax2 = x(i+1,j+1,k+1) - xmid
-                ay2 = y(i+1,j+1,k+1) - ymid
-                az2 = z(i+1,j+1,k+1) - zmid
+                ax2 = xp(i+1,j+1,k+1) - xmid
+                ay2 = yp(i+1,j+1,k+1) - ymid
+                az2 = zp(i+1,j+1,k+1) - zmid
 
                 v4 = 0.166667 * &
                 abs(( ax2 * dx1 + ay2 * dy1 + az2 * dz1 ))
@@ -907,21 +920,21 @@
         do j = 1,nf
             do i = 1,nz
 
-                xmid = 0.5 * ( x(i,j,k) + x(i+1,j+1,k+1) )
-                ymid = 0.5 * ( y(i,j,k) + y(i+1,j+1,k+1) )
-                zmid = 0.5 * ( z(i,j,k) + z(i+1,j+1,k+1) )
+                xmid = 0.5 * ( xp(i,j,k) + xp(i+1,j+1,k+1) )
+                ymid = 0.5 * ( yp(i,j,k) + yp(i+1,j+1,k+1) )
+                zmid = 0.5 * ( zp(i,j,k) + zp(i+1,j+1,k+1) )
 
-                ax1 = x(i,j,k) - xmid
-                ay1 = y(i,j,k) - ymid
-                az1 = z(i,j,k) - zmid
+                ax1 = xp(i,j,k) - xmid
+                ay1 = yp(i,j,k) - ymid
+                az1 = zp(i,j,k) - zmid
 
-                bx1 = x(i+1,j,k) - xmid
-                by1 = y(i+1,j,k) - ymid
-                bz1 = z(i+1,j,k) - zmid
+                bx1 = xp(i+1,j,k) - xmid
+                by1 = yp(i+1,j,k) - ymid
+                bz1 = zp(i+1,j,k) - zmid
 
-                cx1 = x(i,j+1,k) - xmid
-                cy1 = y(i,j+1,k) - ymid
-                cz1 = z(i,j+1,k) - zmid
+                cx1 = xp(i,j+1,k) - xmid
+                cy1 = yp(i,j+1,k) - ymid
+                cz1 = zp(i,j+1,k) - zmid
 
                 dx1 =    by1 * cz1 - bz1 * cy1
                 dy1 = -( bx1 * cz1 - bz1 * cx1 )
@@ -930,24 +943,24 @@
                 v1 = 0.166667 * &
                 abs(( ax1 * dx1 + ay1 * dy1 + az1 * dz1 ))
 
-                ax2 = x(i+1,j+1,k) - xmid
-                ay2 = y(i+1,j+1,k) - ymid
-                az2 = z(i+1,j+1,k) - zmid
+                ax2 = xp(i+1,j+1,k) - xmid
+                ay2 = yp(i+1,j+1,k) - ymid
+                az2 = zp(i+1,j+1,k) - zmid
 
                 v2 = 0.166667 * &
                 abs(( ax2 * dx1 + ay2 * dy1 + az2 * dz1 ))
 
-                ax1 = x(i,j,k+1) - xmid
-                ay1 = y(i,j,k+1) - ymid
-                az1 = z(i,j,k+1) - zmid
+                ax1 = xp(i,j,k+1) - xmid
+                ay1 = yp(i,j,k+1) - ymid
+                az1 = zp(i,j,k+1) - zmid
 
-                bx1 = x(i+1,j,k+1) - xmid
-                by1 = y(i+1,j,k+1) - ymid
-                bz1 = z(i+1,j,k+1) - zmid
+                bx1 = xp(i+1,j,k+1) - xmid
+                by1 = yp(i+1,j,k+1) - ymid
+                bz1 = zp(i+1,j,k+1) - zmid
 
-                cx1 = x(i,j+1,k+1) - xmid
-                cy1 = y(i,j+1,k+1) - ymid
-                cz1 = z(i,j+1,k+1) - zmid
+                cx1 = xp(i,j+1,k+1) - xmid
+                cy1 = yp(i,j+1,k+1) - ymid
+                cz1 = zp(i,j+1,k+1) - zmid
 
                 dx1 =    by1 * cz1 - bz1 * cy1
                 dy1 = -( bx1 * cz1 - bz1 * cx1 )
@@ -956,9 +969,9 @@
                 v3 = 0.166667 * &
                 abs(( ax1 * dx1 + ay1 * dy1 + az1 * dz1 ))
                        
-                ax2 = x(i+1,j+1,k+1) - xmid
-                ay2 = y(i+1,j+1,k+1) - ymid
-                az2 = z(i+1,j+1,k+1) - zmid
+                ax2 = xp(i+1,j+1,k+1) - xmid
+                ay2 = yp(i+1,j+1,k+1) - ymid
+                az2 = zp(i+1,j+1,k+1) - zmid
 
                 v4 = 0.166667 * &
                 abs(( ax2 * dx1 + ay2 * dy1 + az2 * dz1 ))
@@ -991,7 +1004,7 @@
 !******************************************
 
 
-    subroutine area(x,y,z)
+    subroutine area
 
 !       calculate areas of cell sides
 !       break each quadrilateral side into
@@ -1004,21 +1017,19 @@
     use parameter_mod
     use grid_mod
 
-    real :: x(nzp1,nfp1,nlp1),y(nzp1,nfp1,nlp1),z(nzp1,nfp1,nlp1)
-
 !       sidei (s-direction)
 
     do k = 1,nl
         do j = 1,nf
             do i = 1,nzp1
 
-                ax1 = x(i,j+1,k) - x(i,j,k)
-                ay1 = y(i,j+1,k) - y(i,j,k)
-                az1 = z(i,j+1,k) - z(i,j,k)
+                ax1 = xp(i,j+1,k) - xp(i,j,k)
+                ay1 = yp(i,j+1,k) - yp(i,j,k)
+                az1 = zp(i,j+1,k) - zp(i,j,k)
 
-                bx1 = x(i,j,k+1) - x(i,j,k)
-                by1 = y(i,j,k+1) - y(i,j,k)
-                bz1 = z(i,j,k+1) - z(i,j,k)
+                bx1 = xp(i,j,k+1) - xp(i,j,k)
+                by1 = yp(i,j,k+1) - yp(i,j,k)
+                bz1 = zp(i,j,k+1) - zp(i,j,k)
 
                 cx1 =    ay1 * bz1 - az1 * by1
                 cy1 = -( ax1 * bz1 - az1 * bx1 )
@@ -1026,13 +1037,13 @@
 
                 a1 = 0.5 * sqrt ( cx1*cx1 + cy1*cy1 + cz1*cz1 )
 
-                ax2 = x(i,j+1,k) - x(i,j+1,k+1)
-                ay2 = y(i,j+1,k) - y(i,j+1,k+1)
-                az2 = z(i,j+1,k) - z(i,j+1,k+1)
+                ax2 = xp(i,j+1,k) - xp(i,j+1,k+1)
+                ay2 = yp(i,j+1,k) - yp(i,j+1,k+1)
+                az2 = zp(i,j+1,k) - zp(i,j+1,k+1)
 
-                bx2 = x(i,j,k+1) - x(i,j+1,k+1)
-                by2 = y(i,j,k+1) - y(i,j+1,k+1)
-                bz2 = z(i,j,k+1) - z(i,j+1,k+1)
+                bx2 = xp(i,j,k+1) - xp(i,j+1,k+1)
+                by2 = yp(i,j,k+1) - yp(i,j+1,k+1)
+                bz2 = zp(i,j,k+1) - zp(i,j+1,k+1)
 
                 cx2 =    ay2 * bz2 - az2 * by2
                 cy2 = -( ax2 * bz2 - az2 * bx2 )
@@ -1052,13 +1063,13 @@
         do j = 1,nfp1
             do i = 1,nz
 
-                ax1 = x(i+1,j,k) - x(i,j,k)
-                ay1 = y(i+1,j,k) - y(i,j,k)
-                az1 = z(i+1,j,k) - z(i,j,k)
+                ax1 = xp(i+1,j,k) - xp(i,j,k)
+                ay1 = yp(i+1,j,k) - yp(i,j,k)
+                az1 = zp(i+1,j,k) - zp(i,j,k)
 
-                bx1 = x(i,j,k+1) - x(i,j,k)
-                by1 = y(i,j,k+1) - y(i,j,k)
-                bz1 = z(i,j,k+1) - z(i,j,k)
+                bx1 = xp(i,j,k+1) - xp(i,j,k)
+                by1 = yp(i,j,k+1) - yp(i,j,k)
+                bz1 = zp(i,j,k+1) - zp(i,j,k)
 
                 cx1 =    ay1 * bz1 - az1 * by1
                 cy1 = -( ax1 * bz1 - az1 * bx1 )
@@ -1066,13 +1077,13 @@
 
                 a1 = 0.5 * sqrt ( cx1*cx1 + cy1*cy1 + cz1*cz1 )
                        
-                ax2 = x(i+1,j,k) - x(i+1,j,k+1)
-                ay2 = y(i+1,j,k) - y(i+1,j,k+1)
-                az2 = z(i+1,j,k) - z(i+1,j,k+1)
+                ax2 = xp(i+1,j,k) - xp(i+1,j,k+1)
+                ay2 = yp(i+1,j,k) - yp(i+1,j,k+1)
+                az2 = zp(i+1,j,k) - zp(i+1,j,k+1)
 
-                bx2 = x(i,j,k+1) - x(i+1,j,k+1)
-                by2 = y(i,j,k+1) - y(i+1,j,k+1)
-                bz2 = z(i,j,k+1) - z(i+1,j,k+1)
+                bx2 = xp(i,j,k+1) - xp(i+1,j,k+1)
+                by2 = yp(i,j,k+1) - yp(i+1,j,k+1)
+                bz2 = zp(i,j,k+1) - zp(i+1,j,k+1)
 
                 cx2 =    ay2 * bz2 - az2 * by2
                 cy2 = -( ax2 * bz2 - az2 * bx2 )
@@ -1092,13 +1103,13 @@
         do j = 1,nf
             do i = 1,nz
 
-                ax1 = x(i+1,j,k) - x(i,j,k)
-                ay1 = y(i+1,j,k) - y(i,j,k)
-                az1 = z(i+1,j,k) - z(i,j,k)
+                ax1 = xp(i+1,j,k) - xp(i,j,k)
+                ay1 = yp(i+1,j,k) - yp(i,j,k)
+                az1 = zp(i+1,j,k) - zp(i,j,k)
 
-                bx1 = x(i,j+1,k) - x(i,j,k)
-                by1 = y(i,j+1,k) - y(i,j,k)
-                bz1 = z(i,j+1,k) - z(i,j,k)
+                bx1 = xp(i,j+1,k) - xp(i,j,k)
+                by1 = yp(i,j+1,k) - yp(i,j,k)
+                bz1 = zp(i,j+1,k) - zp(i,j,k)
 
                 cx1 =    ay1 * bz1 - az1 * by1
                 cy1 = -( ax1 * bz1 - az1 * bx1 )
@@ -1106,13 +1117,13 @@
 
                 a1 = 0.5 * sqrt ( cx1*cx1 + cy1*cy1 + cz1*cz1 )
 
-                ax2 = x(i+1,j,k) - x(i+1,j+1,k)
-                ay2 = y(i+1,j,k) - y(i+1,j+1,k)
-                az2 = z(i+1,j,k) - z(i+1,j+1,k)
+                ax2 = xp(i+1,j,k) - xp(i+1,j+1,k)
+                ay2 = yp(i+1,j,k) - yp(i+1,j+1,k)
+                az2 = zp(i+1,j,k) - zp(i+1,j+1,k)
 
-                bx2 = x(i,j+1,k) - x(i+1,j+1,k)
-                by2 = y(i,j+1,k) - y(i+1,j+1,k)
-                bz2 = z(i,j+1,k) - z(i+1,j+1,k)
+                bx2 = xp(i,j+1,k) - xp(i+1,j+1,k)
+                by2 = yp(i,j+1,k) - yp(i+1,j+1,k)
+                bz2 = zp(i,j+1,k) - zp(i+1,j+1,k)
 
                 cx2 =    ay2 * bz2 - az2 * by2
                 cy2 = -( ax2 * bz2 - az2 * bx2 )
@@ -1138,14 +1149,12 @@
 !******************************************
 
 
-    subroutine line(x,y,z)
+    subroutine line
 
 !       calculate length of cell sides
 
     use parameter_mod
     use grid_mod
-
-    real :: x(nzp1,nfp1,nlp1),y(nzp1,nfp1,nlp1),z(nzp1,nfp1,nlp1)
 
 !       xdels (s-direction)
 
@@ -1153,9 +1162,9 @@
         do j = 1,nfp1
             do i = 1,nz
 
-                ax1 = x(i+1,j,k) - x(i,j,k)
-                ay1 = y(i+1,j,k) - y(i,j,k)
-                az1 = z(i+1,j,k) - z(i,j,k)
+                ax1 = xp(i+1,j,k) - xp(i,j,k)
+                ay1 = yp(i+1,j,k) - yp(i,j,k)
+                az1 = zp(i+1,j,k) - zp(i,j,k)
 
                 xdels(i,j,k) = sqrt ( ax1*ax1 + ay1*ay1 + az1*az1 ) &
                 * 1.e5
@@ -1170,9 +1179,9 @@
         do j = 1,nf
             do i = 1,nzp1
 
-                ax1 = x(i,j+1,k) - x(i,j,k)
-                ay1 = y(i,j+1,k) - y(i,j,k)
-                az1 = z(i,j+1,k) - z(i,j,k)
+                ax1 = xp(i,j+1,k) - xp(i,j,k)
+                ay1 = yp(i,j+1,k) - yp(i,j,k)
+                az1 = zp(i,j+1,k) - zp(i,j,k)
 
                 xdelp(i,j,k) = sqrt ( ax1*ax1 + ay1*ay1 + az1*az1 ) &
                 * 1.e5
@@ -1187,9 +1196,9 @@
         do j = 1,nfp1
             do i = 1,nzp1
 
-                ax1 = x(i,j,k+1) - x(i,j,k)
-                ay1 = y(i,j,k+1) - y(i,j,k)
-                az1 = z(i,j,k+1) - z(i,j,k)
+                ax1 = xp(i,j,k+1) - xp(i,j,k)
+                ay1 = yp(i,j,k+1) - yp(i,j,k)
+                az1 = zp(i,j,k+1) - zp(i,j,k)
 
                 xdelh(i,j,k) = sqrt ( ax1*ax1 + ay1*ay1 + az1*az1 ) &
                 * 1.e5
@@ -1210,7 +1219,7 @@
 !******************************************
 
 
-    subroutine normal ( x,y,z )
+    subroutine normal 
 
 !       calculate unit normal direction to cell face
 !       normal: c = a x b / |a x b|
@@ -1218,7 +1227,6 @@
     use parameter_mod
     use grid_mod
 
-    real :: x(nzp1,nfp1,nlp1),y(nzp1,nfp1,nlp1),z(nzp1,nfp1,nlp1)
 
 !       norms (normal to cell face in s-direction)
 
@@ -1226,13 +1234,13 @@
         do j = 1,nf
             do i = 1,nzp1
                             
-                ax1 = x(i,j+1,k+1) - x(i,j,k)
-                ay1 = y(i,j+1,k+1) - y(i,j,k)
-                az1 = z(i,j+1,k+1) - z(i,j,k)
+                ax1 = xp(i,j+1,k+1) - xp(i,j,k)
+                ay1 = yp(i,j+1,k+1) - yp(i,j,k)
+                az1 = zp(i,j+1,k+1) - zp(i,j,k)
 
-                bx1 = x(i,j,k+1) - x(i,j+1,k)
-                by1 = y(i,j,k+1) - y(i,j+1,k)
-                bz1 = z(i,j,k+1) - z(i,j+1,k)
+                bx1 = xp(i,j,k+1) - xp(i,j+1,k)
+                by1 = yp(i,j,k+1) - yp(i,j+1,k)
+                bz1 = zp(i,j,k+1) - zp(i,j+1,k)
 
                 cx1 =   ay1 * bz1 - az1 * by1
                 cy1 = -(ax1 * bz1 - az1 * bx1)
@@ -1254,13 +1262,13 @@
         do j = 1,nfp1
             do i = 1,nz
                             
-                ax1 = x(i,j,k+1) - x(i+1,j,k)
-                ay1 = y(i,j,k+1) - y(i+1,j,k)
-                az1 = z(i,j,k+1) - z(i+1,j,k)
+                ax1 = xp(i,j,k+1) - xp(i+1,j,k)
+                ay1 = yp(i,j,k+1) - yp(i+1,j,k)
+                az1 = zp(i,j,k+1) - zp(i+1,j,k)
 
-                bx1 = x(i+1,j,k+1) - x(i,j,k)
-                by1 = y(i+1,j,k+1) - y(i,j,k)
-                bz1 = z(i+1,j,k+1) - z(i,j,k)
+                bx1 = xp(i+1,j,k+1) - xp(i,j,k)
+                by1 = yp(i+1,j,k+1) - yp(i,j,k)
+                bz1 = zp(i+1,j,k+1) - zp(i,j,k)
 
                 cx1 =   ay1 * bz1 - az1 * by1
                 cy1 = -(ax1 * bz1 - az1 * bx1)
@@ -1282,13 +1290,13 @@
         do j = 1,nf
             do i = 1,nz
                               
-                ax1 = x(i+1,j+1,k) - x(i,j,k)
-                ay1 = y(i+1,j+1,k) - y(i,j,k)
-                az1 = z(i+1,j+1,k) - z(i,j,k)
+                ax1 = xp(i+1,j+1,k) - xp(i,j,k)
+                ay1 = yp(i+1,j+1,k) - yp(i,j,k)
+                az1 = zp(i+1,j+1,k) - zp(i,j,k)
 
-                bx1 = x(i,j+1,k) - x(i+1,j,k)
-                by1 = y(i,j+1,k) - y(i+1,j,k)
-                bz1 = z(i,j+1,k) - z(i+1,j,k)
+                bx1 = xp(i,j+1,k) - xp(i+1,j,k)
+                by1 = yp(i,j+1,k) - yp(i+1,j,k)
+                bz1 = zp(i,j+1,k) - zp(i+1,j,k)
 
                 cx1 =   ay1 * bz1 - az1 * by1
                 cy1 = -(ax1 * bz1 - az1 * bx1)
@@ -1356,7 +1364,7 @@
 !******************************************
 
 
-    subroutine vpsnormal ( xs,ys,zs )
+    subroutine vpsnormal
 
 !     calculate e x b velocity in p-direction
 !     change p but keep q and phi constant
@@ -1365,7 +1373,6 @@
     use parameter_mod
     use grid_mod
 
-    real :: xs(nz,nf,nl),ys(nz,nf,nl),zs(nz,nf,nl)
     real :: xss(nz,nf,nl),yss(nz,nf,nl),zss(nz,nf,nl)
      
     delp  = .01
@@ -1421,7 +1428,7 @@
 !******************************************
 
 
-    subroutine vhsnormal ( xs,ys,zs )
+    subroutine vhsnormal
 
 !     calculate e x b velocity in h-direction
 !     change phi but keep p and q constant
@@ -1430,7 +1437,6 @@
     use parameter_mod
     use grid_mod
 
-    real :: xs(nz,nf,nl),ys(nz,nf,nl),zs(nz,nf,nl)
     real :: xss(nz,nf,nl),yss(nz,nf,nl),zss(nz,nf,nl)
      
     delblon = .1
@@ -1480,6 +1486,132 @@
 
     return
     end subroutine vhsnormal
+
+
+!******************************************
+!******************************************
+
+!            vppnormal
+
+!******************************************
+!******************************************
+
+
+    subroutine vppnormal
+
+!     calculate e x b velocity in p-direction
+!     change p but keep q and phi constant
+!     use the p-grid
+
+    use parameter_mod
+    use grid_mod
+
+    real :: xpp(nzp1,nfp1,nlp1),ypp(nzp1,nfp1,nlp1),zpp(nzp1,nfp1,nlp1)
+     
+!     calculate grid at qp, blonp, and ps + delp
+
+    delp  = .01 
+
+    do k = 1,nlp1
+        do j = 1,nfp1
+            do i = 1,nzp1
+                qtmp   = qp(i,j,k)
+                pvalue = pp(i,j,k) * ( 1. + delp )
+                r = re*qp_solve(qtmp,pvalue)
+
+                br_norm   = r / re
+                blat      = asin ( qp(i,j,k) * br_norm ** 2 ) * rtod
+                blon      = blonp(i,j,k)
+
+            !           grid in cartesian coordinates
+
+                xpp(i,j,k) = r * cos( blat * po180 ) * sin( blon * po180 )
+                ypp(i,j,k) = r * sin( blat * po180 )
+                zpp(i,j,k) = r * cos( blat * po180 ) * cos( blon * po180 )
+            enddo
+        enddo
+    enddo
+
+!     direction of e x b velocity in p-direction
+
+    do k = 1,nlp1
+        do j = 1,nfp1
+            do i = 1,nzp1
+                ax1 = xpp(i,j,k) - xp(i,j,k)
+                ay1 = ypp(i,j,k) - yp(i,j,k)
+                az1 = zpp(i,j,k) - zp(i,j,k)
+                a1  = sqrt ( ax1*ax1 + ay1*ay1 + az1*az1 )
+                vppnx(i,j,k) = ax1 / a1
+                vppny(i,j,k) = ay1 / a1
+                vppnz(i,j,k) = az1 / a1
+            enddo
+        enddo
+    enddo
+
+    return
+    end subroutine vppnormal
+
+
+!******************************************
+!******************************************
+
+!            vhpnormal
+
+!******************************************
+!******************************************
+
+
+    subroutine vhpnormal 
+
+!     calculate e x b velocity in h-direction
+!     change phi but keep p and q constant
+!     use the p-grid
+
+    use parameter_mod
+    use grid_mod
+
+    real :: xpp(nzp1,nfp1,nlp1),ypp(nzp1,nfp1,nlp1),zpp(nzp1,nfp1,nlp1)
+     
+    delblon = .1
+
+!     calculate grid at qs, ps, and blons + delblon
+
+    do k = 1,nlp1
+        do j = 1,nfp1
+            do i = 1,nzp1
+                 
+                r         = brp(i,j,k)
+                blat      = blatp(i,j,k)
+                blon      = blonp(i,j,k) + delblon
+
+            !           grid in cartesian coordinates
+
+                xpp(i,j,k) = r * cos( blat * po180 ) * sin( blon * po180 )
+                ypp(i,j,k) = r * sin( blat * po180 )
+                zpp(i,j,k) = r * cos( blat * po180 ) * cos( blon * po180 )
+
+            enddo
+        enddo
+    enddo
+
+!     direction of e x b velocity in h-direction
+
+    do k = 1,nlp1
+        do j = 1,nfp1
+            do i = 1,nzp1
+                ax1 = xpp(i,j,k) - xp(i,j,k)
+                ay1 = ypp(i,j,k) - yp(i,j,k)
+                az1 = zpp(i,j,k) - zp(i,j,k)
+                a1  = sqrt ( ax1*ax1 + ay1*ay1 + az1*az1 )
+                vhpnx(i,j,k) = ax1 / a1
+                vhpny(i,j,k) = ay1 / a1
+                vhpnz(i,j,k) = az1 / a1
+            enddo
+        enddo
+    enddo
+
+    return
+    end subroutine vhpnormal
 
 
 !************************************************
@@ -1583,7 +1715,7 @@
     use grid_mod
 
     real :: xm(nz,nf,nlp1),ym(nz,nf,nlp1),zm(nz,nf,nlp1)
-    real :: xp(nz,nf,nlp1),yp(nz,nf,nlp1),zp(nz,nf,nlp1)
+    real :: xpp(nz,nf,nlp1),ypp(nz,nf,nlp1),zpp(nz,nf,nlp1)
 
     qfac0 = 0.001
 
@@ -1613,9 +1745,9 @@
                 br_norm   = r / re
                 arg       = qtmpp * br_norm ** 2
                 blat      = asin ( arg ) * rtod
-                xp(i,j,k) = r * cos( blat * po180 ) * sin( blon * po180 )
-                yp(i,j,k) = r * sin( blat * po180 )
-                zp(i,j,k) = r * cos( blat * po180 ) * cos( blon * po180 )
+                xpp(i,j,k) = r * cos( blat * po180 ) * sin( blon * po180 )
+                ypp(i,j,k) = r * sin( blat * po180 )
+                zpp(i,j,k) = r * cos( blat * po180 ) * cos( blon * po180 )
 
             enddo
         enddo
@@ -1626,9 +1758,9 @@
     do k = 1,nlp1
         do j = 1,nf
             do i = 1,nz
-                dx = xp(i,j,k) - xm(i,j,k)
-                dy = yp(i,j,k) - ym(i,j,k)
-                dz = zp(i,j,k) - zm(i,j,k)
+                dx = xpp(i,j,k) - xm(i,j,k)
+                dy = ypp(i,j,k) - ym(i,j,k)
+                dz = zpp(i,j,k) - zm(i,j,k)
                 d0 = sqrt( dx*dx + dy*dy + dz*dz )
                 bdirhx(i,j,k) = dx / d0
                 bdirhy(i,j,k) = dy / d0
@@ -1654,7 +1786,7 @@
     use grid_mod
 
     real :: xm(nz,nfp1,nl),ym(nz,nfp1,nl),zm(nz,nfp1,nl)
-    real :: xp(nz,nfp1,nl),yp(nz,nfp1,nl),zp(nz,nfp1,nl)
+    real :: xpp(nz,nfp1,nl),ypp(nz,nfp1,nl),zpp(nz,nfp1,nl)
 
     qfac0 = 0.001
 
@@ -1691,9 +1823,9 @@
                 br_norm   = r / re
                 arg       = qtmpp * br_norm ** 2
                 blat      = asin ( arg ) * rtod
-                xp(i,j,k) = r * cos( blat * po180 ) * sin( blon * po180 )
-                yp(i,j,k) = r * sin( blat * po180 )
-                zp(i,j,k) = r * cos( blat * po180 ) * cos( blon * po180 )
+                xpp(i,j,k) = r * cos( blat * po180 ) * sin( blon * po180 )
+                ypp(i,j,k) = r * sin( blat * po180 )
+                zpp(i,j,k) = r * cos( blat * po180 ) * cos( blon * po180 )
 
             enddo
         enddo
@@ -1704,9 +1836,9 @@
     do k = 1,nl
         do j = 1,nfp1
             do i = 1,nz
-                dx = xp(i,j,k) - xm(i,j,k)
-                dy = yp(i,j,k) - ym(i,j,k)
-                dz = zp(i,j,k) - zm(i,j,k)
+                dx = xpp(i,j,k) - xm(i,j,k)
+                dy = ypp(i,j,k) - ym(i,j,k)
+                dz = zpp(i,j,k) - zm(i,j,k)
                 d0 = sqrt( dx*dx + dy*dy + dz*dz )
                 bdirpx(i,j,k) = dx / d0
                 bdirpy(i,j,k) = dy / d0
@@ -1732,29 +1864,13 @@
     use grid_mod
 
     real :: xm(nz,nf,nl),ym(nz,nf,nl),zm(nz,nf,nl)
-    real :: xp(nz,nf,nl),yp(nz,nf,nl),zp(nz,nf,nl)
+    real :: xpp(nz,nf,nl),ypp(nz,nf,nl),zpp(nz,nf,nl)
 
     qfac0 = 0.001
 
     do k = 1,nl
         do j = 1,nf
             do i = 1,nz
-
-!!$                qtmp   = .25 * ( qp(i,j,k)   + qp(i,j,k+1)  + &
-!!$                qp(i,j+1,k) + qp(i,j+1,k+1)  )
-!!$                ptmp   = .25 * ( pp(i,j,k)   + pp(i,j,k+1)  + &
-!!$                pp(i,j+1,k) + pp(i,j+1,k+1)  )
-!!$                blon   = .25 * ( blonp(i,j,k)   + blonp(i,j,k+1)  + &
-!!$                blonp(i,j+1,k) + blonp(i,j+1,k+1)  )
-!!$                 
-!!$                qfac   = max(abs(.01 * qtmp),qfac0)
-!!$                          
-!!$                if ( i /= nzp1 ) then
-!!$                    blon  = blons(i,j,k)
-!!$                else
-!!$                    blon  = blons(nz,j,k)
-!!$                endif
-
 
             blon = blons(i,j,k)
             qtmp = qs(i,j,k)
@@ -1775,9 +1891,9 @@
                 br_norm   = r / re
                 arg       = qtmpp * br_norm ** 2
                 blat      = asin ( arg ) * rtod
-                xp(i,j,k) = r * cos( blat * po180 ) * sin( blon * po180 )
-                yp(i,j,k) = r * sin( blat * po180 )
-                zp(i,j,k) = r * cos( blat * po180 ) * cos( blon * po180 )
+                xpp(i,j,k) = r * cos( blat * po180 ) * sin( blon * po180 )
+                ypp(i,j,k) = r * sin( blat * po180 )
+                zpp(i,j,k) = r * cos( blat * po180 ) * cos( blon * po180 )
 
             enddo
         enddo
@@ -1788,9 +1904,9 @@
     do k = 1,nl
         do j = 1,nf
             do i = 1,nz
-                dx = xp(i,j,k) - xm(i,j,k)
-                dy = yp(i,j,k) - ym(i,j,k)
-                dz = zp(i,j,k) - zm(i,j,k)
+                dx = xpp(i,j,k) - xm(i,j,k)
+                dy = ypp(i,j,k) - ym(i,j,k)
+                dz = zpp(i,j,k) - zm(i,j,k)
                 d0 = sqrt( dx*dx + dy*dy + dz*dz )
                 bdirsx(i,j,k) = dx / d0
                 bdirsy(i,j,k) = dy / d0
@@ -1799,26 +1915,6 @@
         enddo
     enddo
 
-!      print *,'before',bdirsy(1,nf,1),bdirsy(1,nf-1,1)
-
-!     extrapolate highest field line j = nf
-
-!!$    do k = 1,nl
-!!$        j = nf
-!!$        do i = 1,nz
-!!$            bdirsx(i,j,k) = 2. * bdirsx(i,j-1,k) - &
-!!$            bdirsx(i,j-2,k)
-!!$            bdirsy(i,j,k) = 2. * bdirsy(i,j-1,k) - &
-!!$            bdirsy(i,j-2,k)
-!!$            bdirsz(i,j,k) = 2. * bdirsz(i,j-1,k) - &
-!!$            bdirsz(i,j-2,k)
-!!$            bdirsx(i,j,k) = bdirsx(i,j-1,k)
-!!$            bdirsy(i,j,k) = bdirsy(i,j-1,k)
-!!$            bdirsz(i,j,k) = bdirsz(i,j-1,k)
-!!$        enddo
-!!$    enddo
-
-!      print *,'after',bdirsx(1,nf,1),bdirsx(1,nf-1,1)
 
     return
     end subroutine bdirs
@@ -1838,7 +1934,7 @@
     use grid_mod
 
 
-    real :: xp(nzp1,nf,nlp1),yp(nzp1,nf,nlp1),zp(nzp1,nf,nlp1)
+    real :: xpp(nzp1,nf,nlp1),ypp(nzp1,nf,nlp1),zpp(nzp1,nf,nlp1)
     real :: bmtmp(nzp1,nf,nlp1)
 
 !     calculate grid on p face centered on s
@@ -1857,9 +1953,9 @@
                 blon = blonp(i,j,k)
                 theta = acos ( qtmp * br_norm ** 2 )
                 bmtmp(i,j,k) = sqrt ( 1. + 3.*cos(theta)**2 ) / br_norm ** 3
-                xp(i,j,k) = r * cos( blat * po180 ) * sin( blon * po180 )
-                yp(i,j,k) = r * sin( blat * po180 )
-                zp(i,j,k) = r * cos( blat * po180 ) * cos( blon * po180 )
+                xpp(i,j,k) = r * cos( blat * po180 ) * sin( blon * po180 )
+                ypp(i,j,k) = r * sin( blat * po180 )
+                zpp(i,j,k) = r * cos( blat * po180 ) * cos( blon * po180 )
                 if ( i == nzh) then
                     blatsp(j,k) = blat
                     blonsp(j,k) = blon
@@ -1901,14 +1997,11 @@
     do k = 1,nl
         do j = 1,nf
             do i = 1,nzp1
-                delx  = xp(i,j,k+1) - xp(i,j,k)
-                dely  = yp(i,j,k+1) - yp(i,j,k)
-                delz  = zp(i,j,k+1) - zp(i,j,k)
+                delx  = xpp(i,j,k+1) - xpp(i,j,k)
+                dely  = ypp(i,j,k+1) - ypp(i,j,k)
+                delz  = zpp(i,j,k+1) - zpp(i,j,k)
                 dpphi = sqrt( delx*delx + dely*dely + delz*delz )
                 delhs(i,j,k) = dpphi * 1.e5 ! convert to cm
-!               ehsx(i,j,k)  = delx/dpphi
-!               ehsy(i,j,k)  = dely/dpphi
-!               ehsz(i,j,k)  = delz/dpphi
             enddo
         enddo
     enddo
@@ -1930,7 +2023,7 @@
     use parameter_mod
     use grid_mod
 
-    real :: xp(nzp1,nfp1,nlp1),yp(nzp1,nfp1,nlp1),zp(nzp1,nfp1,nlp1)
+    real :: xpp(nzp1,nfp1,nlp1),ypp(nzp1,nfp1,nlp1),zpp(nzp1,nfp1,nlp1)
 
 !     calculate grid on h face centered on s
 !     to obtain blatsh and delps
@@ -1946,9 +2039,9 @@
                 br_norm   = r / re
                 blat      = asin ( qtmp * br_norm ** 2 ) * rtod
                 blon      = blonp(i,j,k)
-                xp(i,j,k) = r * cos( blat * po180 ) * sin( blon * po180 )
-                yp(i,j,k) = r * sin( blat * po180 )
-                zp(i,j,k) = r * cos( blat * po180 ) * cos( blon * po180 )
+                xpp(i,j,k) = r * cos( blat * po180 ) * sin( blon * po180 )
+                ypp(i,j,k) = r * sin( blat * po180 )
+                zpp(i,j,k) = r * cos( blat * po180 ) * cos( blon * po180 )
                 if ( i == nzh ) then
                     blatsh(j,k) = blat
                     blonsh(j,k) = blon
@@ -1963,14 +2056,11 @@
     do k = 1,nl
         do j = 1,nf
             do i = 1,nzp1
-                delx  = xp(i,j+1,k) - xp(i,j,k)
-                dely  = yp(i,j+1,k) - yp(i,j,k)
-                delz  = zp(i,j+1,k) - zp(i,j,k)
+                delx  = xpp(i,j+1,k) - xpp(i,j,k)
+                dely  = ypp(i,j+1,k) - ypp(i,j,k)
+                delz  = zpp(i,j+1,k) - zpp(i,j,k)
                 dpphi = sqrt( delx*delx + dely*dely + delz*delz )
                 delps(i,j,k) = dpphi * 1.e5
-!              epsx(i,j,k)  = delx/dpphi
-!              epsy(i,j,k)  = dely/dpphi
-!              epsz(i,j,k)  = delz/dpphi
             enddo
         enddo
     enddo
@@ -1994,7 +2084,7 @@
     use grid_mod
     use exb_mod
 
-    real :: xp(nz,nfp1,nlp1),yp(nz,nfp1,nlp1),zp(nz,nfp1,nlp1)
+    real :: xpp(nz,nfp1,nlp1),ypp(nz,nfp1,nlp1),zpp(nz,nfp1,nlp1)
     real :: bmtmp(nz,nfp1,nlp1)
 
 !     calculate grid on s face centered on s
@@ -2013,9 +2103,9 @@
                 blon = blonp(i,j,k)
                 theta = acos ( qtmp * br_norm ** 2 )
                 bmtmp(i,j,k) = sqrt ( 1. + 3.*cos(theta)**2 ) / br_norm ** 3
-                xp(i,j,k) = r * cos( blat * po180 ) * sin( blon * po180 )
-                yp(i,j,k) = r * sin( blat * po180 )
-                zp(i,j,k) = r * cos( blat * po180 ) * cos( blon * po180 )
+                xpp(i,j,k) = r * cos( blat * po180 ) * sin( blon * po180 )
+                ypp(i,j,k) = r * sin( blat * po180 )
+                zpp(i,j,k) = r * cos( blat * po180 ) * cos( blon * po180 )
                 if ( i == nzh) then
                     blatss(j,k) = blat
                     blonss(j,k) = blon
@@ -2040,9 +2130,9 @@
     do k = 1,nlp1
         do j = 1,nf
             do i = 1,nz
-                delx  = xp(i,j+1,k) - xp(i,j,k)
-                dely  = yp(i,j+1,k) - yp(i,j,k)
-                delz  = zp(i,j+1,k) - zp(i,j,k)
+                delx  = xpp(i,j+1,k) - xpp(i,j,k)
+                dely  = ypp(i,j+1,k) - ypp(i,j,k)
+                delz  = zpp(i,j+1,k) - zpp(i,j,k)
                 dpphi = sqrt( delx*delx + dely*dely + delz*delz )
                 delph(i,j,k) = dpphi * 1.e5 ! convert to cm
                 ephx(i,j,k)  = delx/dpphi
@@ -2088,11 +2178,9 @@
     use grid_mod
 
     real :: xm(nz,nf,nl),ym(nz,nf,nl),zm(nz,nf,nl)
-    real :: xp(nz,nf,nl),yp(nz,nf,nl),zp(nz,nf,nl)
+    real :: xpp(nz,nf,nl),ypp(nz,nf,nl),zpp(nz,nf,nl)
 
     delglat = 0.1
-!      delglat = 1.
-
 
     do k = 1,nl
         do j = 1,nf
@@ -2110,9 +2198,9 @@
                 grad    = grs(i,j,k)
                 call gtob(brad,blonr,blatr,grad,glattmp,glon)
                 call btog_xyz(brad,blonr,blatr,x,y,z)
-                xp(i,j,k) = x
-                yp(i,j,k) = y
-                zp(i,j,k) = z
+                xpp(i,j,k) = x
+                ypp(i,j,k) = y
+                zpp(i,j,k) = z
             enddo
         enddo
     enddo
@@ -2122,9 +2210,9 @@
     do k = 1,nl
         do j = 1,nf
             do i = 1,nz
-                dx = xp(i,j,k) - xm(i,j,k)
-                dy = yp(i,j,k) - ym(i,j,k)
-                dz = zp(i,j,k) - zm(i,j,k)
+                dx = xpp(i,j,k) - xm(i,j,k)
+                dy = ypp(i,j,k) - ym(i,j,k)
+                dz = zpp(i,j,k) - zm(i,j,k)
                 d0 = sqrt( dx*dx + dy*dy + dz*dz )
                 gsthetax(i,j,k) = dx / d0
                 gsthetay(i,j,k) = dy / d0
@@ -2151,10 +2239,9 @@
     use grid_mod
 
     real :: xm(nz,nf,nl),ym(nz,nf,nl),zm(nz,nf,nl)
-    real :: xp(nz,nf,nl),yp(nz,nf,nl),zp(nz,nf,nl)
+    real :: xpp(nz,nf,nl),ypp(nz,nf,nl),zpp(nz,nf,nl)
           
     delglon = 0.1
-!      delglon = 1.
 
     do k = 1,nl
         do j = 1,nf
@@ -2172,9 +2259,9 @@
                 grad    = grs(i,j,k)
                 call gtob(brad,blonr,blatr,grad,glat,glontmp)
                 call btog_xyz(brad,blonr,blatr,x,y,z)
-                xp(i,j,k) = x
-                yp(i,j,k) = y
-                zp(i,j,k) = z
+                xpp(i,j,k) = x
+                ypp(i,j,k) = y
+                zpp(i,j,k) = z
             enddo
         enddo
     enddo
@@ -2184,9 +2271,9 @@
     do k = 1,nl
         do j = 1,nf
             do i = 1,nz
-                dx = xp(i,j,k) - xm(i,j,k)
-                dy = yp(i,j,k) - ym(i,j,k)
-                dz = zp(i,j,k) - zm(i,j,k)
+                dx = xpp(i,j,k) - xm(i,j,k)
+                dy = ypp(i,j,k) - ym(i,j,k)
+                dz = zpp(i,j,k) - zm(i,j,k)
                 d0 = sqrt( dx*dx + dy*dy + dz*dz )
                 gsphix(i,j,k) = dx / d0
                 gsphiy(i,j,k) = dy / d0
@@ -2215,7 +2302,7 @@
     use message_passing_mod
      
     real :: xm(nz,nf,nl),ym(nz,nf,nl),zm(nz,nf,nl)
-    real :: xp(nz,nf,nl),yp(nz,nf,nl),zp(nz,nf,nl)
+    real :: xpp(nz,nf,nl),ypp(nz,nf,nl),zpp(nz,nf,nl)
      
     do k = 1,nl
         do j = 1,nf
@@ -2234,9 +2321,9 @@
                 gradtmp = grs(i,j,k) + delr
                 call gtob(brad,blonr,blatr,gradtmp,glat,glon)
                 call btog_xyz(brad,blonr,blatr,x,y,z)
-                xp(i,j,k) = x
-                yp(i,j,k) = y
-                zp(i,j,k) = z
+                xpp(i,j,k) = x
+                ypp(i,j,k) = y
+                zpp(i,j,k) = z
             enddo
         enddo
     enddo
@@ -2246,9 +2333,9 @@
     do k = 1,nl
         do j = 1,nf
             do i = 1,nz
-                dx = xp(i,j,k) - xm(i,j,k)
-                dy = yp(i,j,k) - ym(i,j,k)
-                dz = zp(i,j,k) - zm(i,j,k)
+                dx = xpp(i,j,k) - xm(i,j,k)
+                dy = ypp(i,j,k) - ym(i,j,k)
+                dz = zpp(i,j,k) - zm(i,j,k)
                 d0 = sqrt( dx*dx + dy*dy + dz*dz )
                 gsrx(i,j,k) = dx / d0
                 gsry(i,j,k) = dy / d0

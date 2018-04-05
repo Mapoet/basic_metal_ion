@@ -605,19 +605,19 @@
 
     ! put in dels (arc length along field line)
 
-        xs    = 0.
+        xss    = 0.
         do i = iz300s(nfl,nll)+1,iz300n(nfl,nll)-1
             if (i == iz300s(nfl,nll)+1) then
-                xs = xs + 0.5*( ne300s + ne(i,nfl,nll) ) * &
+                xss = xss + 0.5*( ne300s + ne(i,nfl,nll) ) * &
                 (dels(iz300s(nfl,nll),nfl,nll) - dels300s)
             else
-                xs = xs + 0.5 * ( ne(i,nfl,nll) + ne(i-1,nfl,nll) ) &
+                xss = xss + 0.5 * ( ne(i,nfl,nll) + ne(i-1,nfl,nll) ) &
                 * dels(i-1,nfl,nll)
                 xn = xn - 0.5 * ( ne(i,nfl,nll) + ne(i-1,nfl,nll) ) &
                 * dels(i-1,nfl,nll)
             endif
              
-            xints = cqe*xs
+            xints = cqe*xss
             xintn = cqe*xn
             xqs    = ne(i,nfl,nll) * q0s * bms(i,nfl,nll) / &
             xbms * exp(-xints)

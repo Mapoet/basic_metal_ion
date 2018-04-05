@@ -1142,6 +1142,8 @@
     real, dimension(:,:,:), allocatable :: xstmp,ystmp,zstmp
     real, dimension(:,:,:), allocatable :: xptmp,yptmp,zptmp
     real, dimension(:,:,:), allocatable :: xhtmp,yhtmp,zhtmp
+    real, dimension(:,:,:), allocatable :: vppnxt,vppnyt,vppnzt
+    real, dimension(:,:,:), allocatable :: vhpnxt,vhpnyt,vhpnzt
 
 !      real fism(linesuv)
 
@@ -1174,6 +1176,8 @@
         allocate (blonptmp(nzp1,nfp1,nlp1))
         allocate (vpsnxt(nz,nf,nlt), vpsnyt(nz,nf,nlt), vpsnzt(nz,nf,nlt))
         allocate (vhsnxt(nz,nf,nlt), vhsnyt(nz,nf,nlt), vhsnzt(nz,nf,nlt))
+        allocate (vppnxt(nzp1,nfp1,nlt), vppnyt(nzp1,nfp1,nlt), vppnzt(nzp1,nfp1,nlt))
+        allocate (vhpnxt(nzp1,nfp1,nlt), vhpnyt(nzp1,nfp1,nlt), vhpnzt(nzp1,nfp1,nlt))
         allocate (xpt(nzp1,nfp1,nlt), ypt(nzp1,nfp1,nlt), zpt(nzp1,nfp1,nlt))
         allocate (bdirsxt(nz,nf,nlt), bdirsyt(nz,nf,nlt), bdirszt(nz,nf,nlt))
         allocate (gsthetaxt(nz,nf,nlt), gsthetayt(nz,nf,nlt), gsthetazt(nz,nf,nlt))
@@ -1734,6 +1738,54 @@
                         enddo
                     enddo
 
+                !  The three things we want to receive are vppnx/y/z
+        print *,'recv vppnx/y/z'
+                    call mpi_recv(altptmp, nzp1*nfp1*nlp1, MPI_REAL, &
+                                  iwrk, 0, MPI_COMM_WORLD, status, ierr)
+                    call mpi_recv(blatptmp, nzp1*nfp1*nlp1, MPI_REAL, &
+                                  iwrk, 0, MPI_COMM_WORLD, status, ierr)
+                    call mpi_recv(blonptmp, nzp1*nfp1*nlp1, MPI_REAL, &
+                                  iwrk, 0, MPI_COMM_WORLD, status, ierr)
+
+                !  Put the submatrices into the correct matrix
+
+                    do k = 2,nl-1
+                        kk = (iwrk-1)*(nl -2) + k - 1
+                        if(kk == 0) kk = nlt
+                        if(kk == nltp1) kk = 1
+                        do j = 1,nfp1
+                            do i = 1,nzp1
+                                vppnxt(i,j,kk) = altptmp(i,j,k)
+                                vppnyt(i,j,kk) = blatptmp(i,j,k)
+                                vppnzt(i,j,kk) = blonptmp(i,j,k)
+                            enddo
+                        enddo
+                    enddo
+
+                !  The three things we want to receive are vhpnx/y/z
+        print *,'recv vhpnx/y/z'
+                    call mpi_recv(altptmp, nzp1*nfp1*nlp1, MPI_REAL, &
+                                  iwrk, 0, MPI_COMM_WORLD, status, ierr)
+                    call mpi_recv(blatptmp, nzp1*nfp1*nlp1, MPI_REAL, &
+                                  iwrk, 0, MPI_COMM_WORLD, status, ierr)
+                    call mpi_recv(blonptmp, nzp1*nfp1*nlp1, MPI_REAL, &
+                                  iwrk, 0, MPI_COMM_WORLD, status, ierr)
+
+                !  Put the submatrices into the correct matrix
+
+                    do k = 2,nl-1
+                        kk = (iwrk-1)*(nl -2) + k - 1
+                        if(kk == 0) kk = nlt
+                        if(kk == nltp1) kk = 1
+                        do j = 1,nfp1
+                            do i = 1,nzp1
+                                vhpnxt(i,j,kk) = altptmp(i,j,k)
+                                vhpnyt(i,j,kk) = blatptmp(i,j,k)
+                                vhpnzt(i,j,kk) = blonptmp(i,j,k)
+                            enddo
+                        enddo
+                    enddo
+
                     ifintot = ifintot -1
                                       
                 endif
@@ -1910,6 +1962,26 @@
             write(169) xnormht
             write(176) ynormht
             write(177) znormht
+            close(169)
+            close(176)
+            close(177)
+
+            open ( unit=169, file='vppnxu.dat'   ,form='unformatted' )
+            open ( unit=176, file='vppnyu.dat'   ,form='unformatted' )
+            open ( unit=177, file='vppnzu.dat'   ,form='unformatted' )
+            write(169) vppnxt
+            write(176) vppnyt
+            write(177) vppnzt
+            close(169)
+            close(176)
+            close(177)
+
+            open ( unit=169, file='vhpnxu.dat'   ,form='unformatted' )
+            open ( unit=176, file='vhpnyu.dat'   ,form='unformatted' )
+            open ( unit=177, file='vhpnzu.dat'   ,form='unformatted' )
+            write(169) vhpnxt
+            write(176) vhpnyt
+            write(177) vhpnzt
             close(169)
             close(176)
             close(177)
@@ -2313,6 +2385,8 @@
         deallocate (baltpt)
         deallocate (vpsnxt,vpsnyt,vpsnzt)
         deallocate (vhsnxt,vhsnyt,vhsnzt)
+        deallocate (vppnxt,vppnyt,vppnzt)
+        deallocate (vhpnxt,vhpnyt,vhpnzt)
         deallocate (xpt,ypt,zpt)
         deallocate (bdirsxt,bdirsyt,bdirszt)
         deallocate (gsthetaxt,gsthetayt,gsthetazt)

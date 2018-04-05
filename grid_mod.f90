@@ -32,10 +32,10 @@ module grid_mod
 
     real :: vol(nz,nf,nl)
     real :: areap(nz,nfp1,nl),areas(nzp1,nf,nl),areah(nz,nf,nlp1)
-    real :: vpnx(nzp1,nfp1,nlp1),vpny(nzp1,nfp1,nlp1),vpnz(nzp1,nfp1,nlp1)
+    real :: vppnx(nzp1,nfp1,nlp1),vppny(nzp1,nfp1,nlp1),vppnz(nzp1,nfp1,nlp1)
     real :: vpsnx(nz,nf,nl),vpsny(nz,nf,nl),vpsnz(nz,nf,nl)
     real :: vhsnx(nz,nf,nl),vhsny(nz,nf,nl),vhsnz(nz,nf,nl)
-    real :: vhnx(nzp1,nfp1,nlp1),vhny(nzp1,nfp1,nlp1),vhnz(nzp1,nfp1,nlp1)
+    real :: vhpnx(nzp1,nfp1,nlp1),vhpny(nzp1,nfp1,nlp1),vhpnz(nzp1,nfp1,nlp1)
     real :: xdels(nz,nfp1,nlp1),xdelp(nzp1,nf,nlp1),xdelh(nzp1,nfp1,nl)
 
     real :: blatp(nzp1,nfp1,nlp1),blatpt(nzp1,nfp1,nlt)
@@ -43,6 +43,14 @@ module grid_mod
     real :: pp(nzp1,nfp1,nlp1),qp(nzp1,nfp1,nlp1),blonp(nzp1,nfp1,nlp1)
     real :: baltp(nzp1,nfp1,nlp1),brp(nzp1,nfp1,nlp1)
     real :: bmpf(nz,nfp1,nl),bmhf(nz,nf,nlp1),bmsf(nzp1,nf,nl)
+
+!   s cartesian grid parameters: gridding for parallel dynamics
+
+    real :: xs(nz,nf,nl),ys(nz,nf,nl),zs(nz,nf,nl)
+
+!   p cartesian grid parameters: gridding for perpendicular dynamics
+
+    real :: xp(nzp1,nfp1,nlp1),yp(nzp1,nfp1,nlp1),zp(nzp1,nfp1,nlp1)
 
 
 end module grid_mod
