@@ -133,8 +133,8 @@
                                      glats(i,j,nll),glonsij, &
                                      hrl,fbar,f10p7,app,whm93        )
 
-            vi(i,j,nll)   = 100. * whm93(1) * tvn0 ! convert to cm/sec
-            ui(i,j,nll)   = 100. * whm93(2) * tvn0 ! convert to cm/sec
+            vi(i,j,nll)   = 100. * whm93(1) * tvn0 * ver ! convert to cm/sec
+            ui(i,j,nll)   = 100. * whm93(2) * tvn0 * veh ! convert to cm/sec
             wi(i,j,nll)   = vw   * tvn0
         enddo
     enddo
@@ -186,8 +186,8 @@
                                      glats(i,j,nll),glonsij, &
                                      hrl,fbar,f10p7,app,whm93        )
 
-            vf(i,j,nll)   = 100. * whm93(1) * tvn0
-            uf(i,j,nll)   = 100. * whm93(2) * tvn0
+            vf(i,j,nll)   = 100. * whm93(1) * tvn0 * ver
+            uf(i,j,nll)   = 100. * whm93(2) * tvn0 * veh
             wf(i,j,nll)   = vw   * tvn0
 
         enddo

@@ -193,62 +193,6 @@
       enddo
     enddo
 
-!     vexbs
-
-! neutral wind component in s direction already
-! accounted for in parallel transport
-
-    do ni = 1,nion
-      do k = 1,nl
-        do j = 1,nf
-            do i = 1,nz
-                factor0 = 1. + nuinoci(i,j,k,ni)**2
-                factor1  = nuinoci(i,j,k,ni) / factor0
-                factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
-                vexbs(i,j,k,ni) = vexbs_phi(i,j,k) / factor0 + &
-                                  v(i,j,k) * factor2 * &
-                (xnorms(i,j,k)*gsthetax(i,j,k) + &
-                 ynorms(i,j,k)*gsthetay(i,j,k) + &
-                 znorms(i,j,k)*gsthetaz(i,j,k)   ) + &
-                                  u(i,j,k) * factor2 * &
-                (xnorms(i,j,k)*gsphix(i,j,k) + &
-                 ynorms(i,j,k)*gsphiy(i,j,k) + &
-                 znorms(i,j,k)*gsphiz(i,j,k)   ) + factor1 * gsoci(i,j,k,ni)
-                if ( baltp(i,j,k) > alt_crit_high ) then
-                    arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
-                    fac = exp(-arg0*arg0)
-                    vexbs(i,j,k,ni) = vexbs(i,j,k,ni) * fac
-                endif
-            enddo
-        enddo
-      enddo
-    enddo
-
-    do ni = 1,nion
-      do k = 1,nl
-        do j = 1,nf
-            i = nzp1
-                factor0 = 1. + nuinoci(i,j,k,ni)**2
-                factor1  = nuinoci(i,j,k,ni) / factor0
-                factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
-                vexbs(i,j,k,ni) = vexbs_phi(i,j,k) / factor0  + &
-                                  v(i-1,j,k) * factor2 * &
-                (xnorms(i-1,j,k)*gsthetax(i-1,j,k) + &
-                 ynorms(i-1,j,k)*gsthetay(i-1,j,k) + &
-                 znorms(i-1,j,k)*gsthetaz(i-1,j,k)   ) + &
-                                  u(i-1,j,k) * factor2 * &
-                (xnorms(i-1,j,k)*gsphix(i-1,j,k) + &
-                 ynorms(i-1,j,k)*gsphiy(i-1,j,k) + &
-                 znorms(i-1,j,k)*gsphiz(i-1,j,k)   ) + factor1 * gsoci(i,j,k,ni)
-                if ( baltp(i,j,k) > alt_crit_high ) then
-                    arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
-                    fac = exp(-arg0*arg0)
-                    vexbs(i,j,k,ni) = vexbs(i,j,k,ni) * fac
-                endif
-        enddo
-      enddo
-    enddo
-
 !     vexbh
 
     do ni = 1,nion
@@ -335,6 +279,76 @@
            enddo
         enddo
 
+    enddo
+
+
+!     vexbs
+
+! neutral wind component in s direction already
+! accounted for in parallel transport
+
+    do ni = 1,nion
+      do k = 1,nl
+        do j = 1,nf
+            do i = 1,nz
+!!$                factor0 = 1. + nuinoci(i,j,k,ni)**2
+!!$                factor1  = nuinoci(i,j,k,ni) / factor0
+!!$                factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
+!!$                vexbs(i,j,k,ni) = vexbs_phi(i,j,k) / factor0 + &
+!!$                                  v(i,j,k) * factor2 * &
+!!$                (xnorms(i,j,k)*gsthetax(i,j,k) + &
+!!$                 ynorms(i,j,k)*gsthetay(i,j,k) + &
+!!$                 znorms(i,j,k)*gsthetaz(i,j,k)   ) + &
+!!$                                  u(i,j,k) * factor2 * &
+!!$                (xnorms(i,j,k)*gsphix(i,j,k) + &
+!!$                 ynorms(i,j,k)*gsphiy(i,j,k) + &
+!!$                 znorms(i,j,k)*gsphiz(i,j,k)   ) + factor1 * gsoci(i,j,k,ni)
+
+                vps = vexbp(i,j,k,ni) * &
+                ( vpsnx(i,j,k) * xnorms(i,j,k) + &
+                vpsny(i,j,k) * ynorms(i,j,k) + &
+                vpsnz(i,j,k) * znorms(i,j,k)   )
+
+                vph = vexbh(i,j,k,ni) * &
+                ( vhsnx(i,j,k) * xnorms(i,j,k) + &
+                vhsny(i,j,k) * ynorms(i,j,k) + &
+                vhsnz(i,j,k) * znorms(i,j,k)   )
+
+                vexbs(i,j,k,ni) = -(vps + vph)
+
+                if ( baltp(i,j,k) > alt_crit_high ) then
+                    arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
+                    fac = exp(-arg0*arg0)
+                    vexbs(i,j,k,ni) = vexbs(i,j,k,ni) * fac
+                endif
+            enddo
+        enddo
+      enddo
+    enddo
+
+    do ni = 1,nion
+      do k = 1,nl
+        do j = 1,nf
+            i = nzp1
+                factor0 = 1. + nuinoci(i,j,k,ni)**2
+                factor1  = nuinoci(i,j,k,ni) / factor0
+                factor2  = nuinoci(i,j,k,ni) ** 2 / factor0
+                vexbs(i,j,k,ni) = vexbs_phi(i,j,k) / factor0  + &
+                                  v(i-1,j,k) * factor2 * &
+                (xnorms(i-1,j,k)*gsthetax(i-1,j,k) + &
+                 ynorms(i-1,j,k)*gsthetay(i-1,j,k) + &
+                 znorms(i-1,j,k)*gsthetaz(i-1,j,k)   ) + &
+                                  u(i-1,j,k) * factor2 * &
+                (xnorms(i-1,j,k)*gsphix(i-1,j,k) + &
+                 ynorms(i-1,j,k)*gsphiy(i-1,j,k) + &
+                 znorms(i-1,j,k)*gsphiz(i-1,j,k)   ) + factor1 * gsoci(i,j,k,ni)
+                if ( baltp(i,j,k) > alt_crit_high ) then
+                    arg0 = ( abs(alt_crit_high - baltp(i,j,k)) ) / dela_high
+                    fac = exp(-arg0*arg0)
+                    vexbs(i,j,k,ni) = vexbs(i,j,k,ni) * fac
+                endif
+        enddo
+      enddo
     enddo
 
 

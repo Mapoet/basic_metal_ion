@@ -17,8 +17,8 @@
   hrinit   =    0.,
   tvn0     =    1.,
   tvexb0   =    1.,
-  ver      =    0.,
-  veh      =    0.,
+  ver      =    1.,
+  veh      =    1.,
   vw       =    0.
   gamss    =    .1,
   alt_crit_avg = 6370.

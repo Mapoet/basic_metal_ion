@@ -3058,7 +3058,7 @@
             term3 =  - bms(i,nfl,nll) * k0 /  dened &
             * ( pep - pem ) / d22s(i,nfl,nll)
 
-            vsid(i,nfl,nll,ni)  =  (term1 + term2 + term3) * xfac
+            vsid(i,nfl,nll,ni)  =  ( term1 + term2 + term3 ) * xfac 
 
         enddo
     enddo
