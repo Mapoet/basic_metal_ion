@@ -284,7 +284,7 @@
         tneut   = 0.
         time    = 0.
         ntm     = 0
-        ntmmax  = min(maxstep, int( hrmax / dthr ))
+        ntmmax  = min(maxstep, int( (hrmax-hrpr) / dthr ))
 
         print *,'max,ntmmax ',max(dt0/3600.,dthr),ntmmax
 
@@ -730,7 +730,7 @@
         ttflag  = .TRUE. 
         ntm     = 0
 
-        ntmmax  = min(maxstep, int(hrmax / dthr))
+        ntmmax  = min(maxstep, int( (hrmax-hrpr) / dthr))
         print *,'iwrk ',taskid,ntmmax
                  
     ! initialize neutrals
